@@ -1,0 +1,16 @@
+# Netlify configuration (versioned in-repo).
+#
+# If this folder is the Git repo root: connect the site as-is (publish = ".").
+# If your repo root is the parent directory that contains this app folder:
+#   - set Site settings → Build & deploy → Base directory to this folder name, OR
+#   - move this file to the repo root and set publish = "<this-folder-name>".
+#
+[build]
+  publish = "."
+
+# SPA fallback: serve `index.html` for client-side routes. Real files (JS, CSS,
+# images, manifest, sw.js) are still served when they exist in the publish directory.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
