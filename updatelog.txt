@@ -1,4 +1,9 @@
 2026-04-04
+- PHASE 6 (Testing & Validation): Implemented comprehensive anchor system validation module in `src/features/anchor-validation.js`. Provides 9 test scenarios covering all edge cases from 12RM_Concept.md: first-set failure, intentional AMRAP, normal solid sessions, rep-drop detection, auto-nudge streaks, incomplete session handling, bad-day skip safeguard, long gap streak reset, and AMRAP with fatigue noted. Run `window.ApexAnchorValidation.validateAnchorSystem()` in browser console to execute all tests.
+- Architecture: Added validation module script reference to `index.html` after workout-actions.js to ensure testing utilities are available for debugging and verification.
+- Testing Infrastructure: Exposed public API via `window.ApexAnchorValidation` with methods for full validation runs, single-scenario testing, anchor history reports, and JSON export of results for documentation purposes.
+- Integration: Validation module integrates with existing state facade and core-utils, using the same anchor constants (α=0.3, target_RM=14, auto_nudge=1.25, etc.) to ensure test accuracy matches production logic.
+
 - Performance hardening: folded per-category exercise-volume maps into the cached weekly review buckets in `src/features/review.js`, so heatmap drill-down modals no longer rescan every session in the selected week when opening a breakdown.
 - Bumped service worker cache to `lift-v92`.
 - Performance hardening: added shared cached weekly-volume buckets and muscle-group lists inside `src/features/review.js` so Analytics, heatmap, and session-derived review views no longer rescan the full session history repeatedly during the same render cycle.
