@@ -167,11 +167,17 @@ input[type=number]{-moz-appearance:textfield}
 
 /* ── SET TABLE ───────────────────────────────────────── */
 .set-wrap{border-top:1px solid var(--bdr)}
-.set-hdr{display:grid;grid-template-columns:2rem 1fr 1fr 2.2rem 2.2rem 2rem;gap:4px;
+.set-hdr{display:grid;grid-template-columns:2rem 1fr 1fr 2.2rem 2.2rem 2rem auto;gap:4px;
           padding:6px 13px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--m2)}
-.set-row{display:grid;grid-template-columns:2rem 1fr 1fr 2.2rem 2.2rem 2rem;gap:4px;
+.set-row{display:grid;grid-template-columns:2rem 1fr 1fr 2.2rem 2.2rem 2rem auto;gap:4px;
           align-items:center;padding:5px 13px;transition:background .1s}
 .set-row.done-row{background:rgba(74,222,128,.04)}
+.amrap-toggle{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--m2);cursor:pointer;
+          padding:3px 6px;border-radius:6px;transition:all .15s;user-select:none}
+.amrap-toggle:hover{background:rgba(71,201,255,.08)}
+.amrap-toggle.disabled{opacity:.35;cursor:not-allowed}
+.amrap-toggle input[type="checkbox"]{margin:0;width:14px;height:14px;cursor:pointer}
+.amrap-toggle span{font-weight:500;letter-spacing:.3px}
 .set-n{font-size:12px;font-family:monospace;color:var(--m2)}
 .set-n.done-n{color:var(--green)}
 .set-i{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--bdr);color:var(--text);
@@ -623,3 +629,12 @@ input[type=number]{-moz-appearance:textfield}
 /* ── EMPTY STATE ─────────────────────────────────────── */
 .empty{text-align:center;padding:48px 0;font-size:14px;color:var(--m2)}
 .empty span{display:block;font-size:12px;margin-top:4px;color:var(--m2)}
+
+/* PHASE 3: Anchor feedback toast (silent coach) */
+.anchor-feedback-toast{position:fixed;top:80px;right:20px;background:linear-gradient(135deg,rgba(74,222,128,.1),rgba(71,201,255,.08));border:1px solid rgba(71,201,255,.3);border-left:4px solid var(--cyan);color:var(--text);padding:14px 16px;border-radius:10px;font-size:12px;z-index:998;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:320px;opacity:0;transform:translateX(20px);transition:all .3s ease}
+.anchor-feedback-toast.show{opacity:1;transform:translateX(0)}
+.anchor-feedback-toast .feedback-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.anchor-feedback-toast .feedback-icon{font-size:16px}
+.anchor-feedback-toast .feedback-body{font-weight:600;margin-bottom:4px}
+.anchor-feedback-toast .change-value{color:var(--cyan);font-weight:700}
+.anchor-feedback-toast .feedback-reason{font-size:11px;color:var(--m2);line-height:1.35}

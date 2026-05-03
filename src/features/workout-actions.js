@@ -666,6 +666,18 @@
     generateWorkout(S.currentDay);
     refreshWorkoutView();
     showToast('Workout saved');
+    
+    // PHASE 3: Show anchor adjustment feedback (silent coach)
+    if (anchorUpdates && anchorUpdates.length > 0) {
+      anchorUpdates.forEach(update => {
+        if (update.change !== 0) {
+          const changeText = update.change > 0 ? `+${update.change.toFixed(1)}` : update.change.toFixed(1);
+          const reasonText = update.adjustmentReason || 'Session complete';
+          showAnchorFeedback(update.exercise, changeText, reasonText);
+        }
+      });
+    }
+    
     showSessionSummary({ totalVolume: totalVol, topSet, improvements });
   }
 
