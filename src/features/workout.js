@@ -10,10 +10,10 @@
 
   function updateWorkoutNotes(value) {
     if (window.ApexState?.persistNotesForDay) {
-      window.ApexState.persistNotesForDay(S.currentDay, value);
+      window.ApexState.persistNotesForDay(window.S.currentDay, value);
       return;
     }
-    S.notes[S.currentDay] = value;
+    window.S.notes[window.S.currentDay] = value;
     persistState();
   }
 
@@ -22,6 +22,7 @@
     const dayKey = String(S.currentDay);
     const workout = ensureWorkout(S.currentDay);
     const el = document.getElementById('tab-workout');
+    if (!el) return;
 
     const totalSets = workout.reduce((sum, slot) => slot.isWarmup ? sum : sum + slot.numSets, 0);
     const doneSets = workout.reduce((sum, slot) => slot.isWarmup ? sum : sum + slot.sets.filter(log => log.done).length, 0);
@@ -99,7 +100,6 @@
         const curVol = numVal(log.weight) * numVal(log.reps);
         const isLivePR = bestVol > 0 && curVol >= bestVol;
 
-        // PHASE 3: AMRAP toggle for Set 3 - user explicitly declares intent
         const isSet3 = (li === 2);
         const amrapChecked = log.isAmrap ? ' checked' : '';
         const amrapDisabled = !log.done ? ' disabled' : '';
@@ -111,7 +111,7 @@
           : '';
 
         setRows += `<div class="set-row${doneRow}" id="sr-${si}-${li}">
-          <span class="set-n${doneNum}\">${li + 1}${isLivePR ? '<span class="live-pr-dot" title="Live PR Volume!"></span>' : ''}</span>
+          <span class="set-n${doneNum}">${li + 1}${isLivePR ? '<span class="live-pr-dot" title="Live PR Volume!"></span>' : ''}</span>
           <input class="set-i${pf}" type="text" inputmode="decimal" enterkeyhint="next"
             placeholder="${escapeHtml(pfWeight)}" value="${escapeHtml(log.weight)}"
             data-si="${si}" data-li="${li}" data-f="weight"
@@ -134,6 +134,7 @@
           <button class="ck-btn${log.done ? ' checked' : ''}" onclick="toggleDone(${si},${li})" aria-label="${log.done ? 'Mark set incomplete' : 'Mark set done'}">${log.done ? '&#10003;' : '&#9675;'}</button>
           ${amrapLabel}
         </div>`;
+      });
 
       html += `<div class="ex-card" id="ec-${si}">
         <div class="ex-hdr">
@@ -230,19 +231,13 @@
     chev.innerHTML = isHidden ? '&#9652;' : '&#9662;';
   }
 
-  // PHASE 3: AMRAP intent toggle handler
   function toggleAmrapIntent(si, li, isChecked) {
     const S = getS();
     const dayKey = String(S.currentDay);
     if (!S || !S.workouts || !S.workouts[dayKey]) return;
-    
     const slot = S.workouts[dayKey][si];
     if (!slot || !slot.sets || !slot.sets[li]) return;
-    
-    // Update the isAmrap flag in the set log
     slot.sets[li].isAmrap = isChecked;
-    
-    // Persist the change
     persistState();
   }
 
