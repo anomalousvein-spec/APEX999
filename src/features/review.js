@@ -576,11 +576,11 @@ function renderHistDetail(exName) {
           <span class="target-weight">${target}</span>
           <span class="target-unit">lbs</span>
         </div>
-        <div class="target-sub">Target 10RM - Goldilocks zone 8-14 reps</div>
+        <div class="target-sub">Estimated 14RM (Anchor) - Goldilocks zone 8-14 reps</div>
         <div class="target-sub" style="margin-top:4px;opacity:.6">Based on recent logged sets, assuming about 1-4 RIR from rep range position</div>
       </div>`
     : `<div class="target-box" style="border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.03)">
-        <div style="font-size:13px;color:var(--m2)">Target 10RM: <em>No data yet</em></div>
+        <div style="font-size:13px;color:var(--m2)">Estimated 14RM (Anchor): <em>No data yet</em></div>
         <div class="target-sub" style="margin-top:4px">Log 3+ sets to unlock weight suggestion</div>
       </div>`;
 
@@ -880,8 +880,14 @@ function deleteHistEntry(exName, entryIdx) {
 }
 
   window.renderAnalytics = renderAnalytics;
+  window.initAnalytics = renderAnalytics;
+  window.cleanupAnalytics = () => {};
   window.renderHistory = renderHistory;
+  window.initHistory = renderHistory;
+  window.cleanupHistory = () => {};
   window.renderSessions = renderSessions;
+  window.initSessions = renderSessions;
+  window.cleanupSessions = () => {};
   window.selectEx = selectEx;
   window.filterSearch = filterSearch;
   window.deleteSession = deleteSession;

@@ -638,3 +638,31 @@ input[type=number]{-moz-appearance:textfield}
 .anchor-feedback-toast .feedback-body{font-weight:600;margin-bottom:4px}
 .anchor-feedback-toast .change-value{color:var(--cyan);font-weight:700}
 .anchor-feedback-toast .feedback-reason{font-size:11px;color:var(--m2);line-height:1.35}
+
+/* Phase 3: Storage Health Styles */
+.health-pill {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.health-pill.good { background: rgba(74,222,128,0.2); color: var(--green); }
+.health-pill.warning { background: rgba(251,191,36,0.2); color: var(--orange); }
+.health-pill.critical { background: rgba(239,68,68,0.2); color: var(--red); }
+
+.metrics-grid {
+  background: rgba(255,255,255,0.03);
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--bdr);
+}
+
+.metric-item {
+  color: var(--m2);
+}
+
+.metric-item strong {
+  color: var(--text);
+  font-family: monospace;
+}

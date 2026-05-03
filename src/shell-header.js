@@ -138,6 +138,8 @@
   }
 
   window.renderHeader = renderHeader;
+  window.initHeader = renderHeader;
+  window.cleanupHeader = () => {};
   window.setBlock = setBlock;
   window.setWeek = setWeek;
   window.setDay = setDay;

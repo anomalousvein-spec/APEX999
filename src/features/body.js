@@ -851,4 +851,6 @@
   window.renderBodyMetricCard = renderBodyMetricCard;
   window.renderBodyRateCard = renderBodyRateCard;
   window.renderBody = renderBody;
+  window.initBody = renderBody;
+  window.cleanupBody = () => {};
 })();
