@@ -465,7 +465,7 @@ function selectEx(name) {
 
 function getChartDataForExercise(exName) {
   const history = getExerciseSessionHistory(exName);
-  if (!history.length) return {volumes:[], est10RMs:[]};
+  if (!history.length) return {volumes:[], est14RMs:[]};
 
   const volumes = history.map(session => ({
     key: session.key,
@@ -473,13 +473,13 @@ function getChartDataForExercise(exName) {
     value: session.entries.reduce((sum, entry) => sum + (entry.volume || 0), 0)
   }));
 
-  const est10RMs = history.map(session => ({
+  const est14RMs = history.map(session => ({
     key: session.key,
     date: session.date,
-    value: estimateTarget10RM(exName, {untilSessionKey: session.key})
+    value: getExerciseAnchor(exName, {untilSessionKey: session.key})
   })).filter(point => point.value !== null);
 
-  return {volumes, est10RMs};
+  return {volumes, est14RMs};
 }
 
 function renderSparkline(data, cls) {
@@ -566,7 +566,9 @@ function renderHistDetail(exName) {
   const el = document.getElementById('histContent');
   if (!exName) { el.innerHTML = ''; return; }
   const entries = S.exHist[exName] || [];
-  const target = estimateTarget10RM(exName);
+
+  const rawTarget = getExerciseAnchor(exName);
+  const target = rawTarget !== null && rawTarget % 1 !== 0 ? rawTarget.toFixed(1) : rawTarget;
   const history = getExerciseSessionHistory(exName);
   const chartData = getChartDataForExercise(exName);
 
@@ -591,7 +593,7 @@ function renderHistDetail(exName) {
 
   const chartsHtml = [
     renderTrendCard('Volume Trend', chartData.volumes, 'sparkline-vol', 'lbs'),
-    renderTrendCard('Estimated 10RM', chartData.est10RMs, 'sparkline-10rm', 'lbs')
+    renderTrendCard('Estimated 14RM (Anchor)', chartData.est14RMs, 'sparkline-10rm', 'lbs')
   ].filter(Boolean).join('');
 
   const allVols = entries.map(e => e.volume);

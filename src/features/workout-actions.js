@@ -545,18 +545,25 @@
       return;
     }
     
-    if (done < total) {
-      showModal(
-        'Incomplete Sets',
-        `${total - done} set${total - done !== 1 ? 's' : ''} not marked done. Complete workout anyway?`,
-        doComplete
-      );
-    } else {
-      doComplete();
-    }
+    const modalMsg = `${done < total ? `${total - done} set${total - done !== 1 ? 's' : ''} not marked done. ` : ''}Finish and save this workout?
+      <div style="margin-top:15px; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; font-size:13px; border:1px solid rgba(255,255,255,0.1)">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="skipAnchorToggle" style="width:18px; height:18px;">
+          <span><strong>Bad Day Safeguard</strong>: Skip Anchor updates for this session (prevents weight drops if you were sick/tired)</span>
+        </label>
+      </div>`;
+
+    showModal(
+      'Finish Workout',
+      modalMsg,
+      () => {
+        const skip = document.getElementById('skipAnchorToggle')?.checked;
+        doComplete(skip);
+      }
+    );
   }
 
-  async function doComplete() {
+  async function doComplete(skipAnchorUpdate = false) {
     const S = getS();
     const dayKey = String(S.currentDay);
     const workout = S.workouts[dayKey];
@@ -670,7 +677,7 @@
           amrapFlagged: doneSets.some(s => s.isAmrap),  // PHASE 4: User-declared AMRAP intent
           sessionStatus: sessionStatus,  // PHASE 5: Pass session completion status
           daysSinceLast: daysSinceLast,  // PHASE 5: Days since last session for streak reset
-          skipAnchorUpdate: false  // PHASE 5: Default to false; can be overridden via UI prompt
+          skipAnchorUpdate: !!skipAnchorUpdate
         };
 
         // Detect AMRAP intent: prioritize user flag, fall back to R3 > 12 heuristic

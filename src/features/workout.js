@@ -49,7 +49,9 @@
       const pinned = !!getPinnedExercise(dayKey, slot.id);
       const label = slot.label;
       const setCount = slot.numSets;
-      const target = getExerciseAnchor(slot.exercise);
+
+      const rawTarget = getExerciseAnchor(slot.exercise);
+      const target = rawTarget !== null && rawTarget % 1 !== 0 ? rawTarget.toFixed(1) : rawTarget;
       const ago = daysAgo(slot.exercise);
       const restSec = S.restTimes[dayKey]?.[slot.id] || 90;
       const slotInProgress = slotHasProgress(slot);
