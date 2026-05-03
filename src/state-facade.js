@@ -256,11 +256,11 @@
       if (opts.mirror !== false) mirrorToStorage();
       return true;
     },
-    stageWorkoutSetInput: (d, si, li, f) => window.ApexWorkoutState.stageWorkoutSetInput(S, d, si, li, f, utils),
-    updateWorkoutSlot: (d, si, f) => window.ApexWorkoutState.updateWorkoutSlot(S, d, si, f, utils),
-    updateWorkoutSet: (d, si, li, f) => window.ApexWorkoutState.updateWorkoutSet(S, d, si, li, f, utils),
-    addWorkoutSet: (d, si, sl) => window.ApexWorkoutState.addWorkoutSet(S, d, si, sl, utils),
-    deleteWorkoutSet: (d, si, li) => window.ApexWorkoutState.deleteWorkoutSet(S, d, si, li, utils),
+    stageWorkoutSetInput: (d, si, li, f) => stageWorkoutSetInput(S, d, si, li, f),
+    updateWorkoutSlot: (d, si, f) => updateWorkoutSlot(S, d, si, f),
+    updateWorkoutSet: (d, si, li, f) => updateWorkoutSet(S, d, si, li, f),
+    addWorkoutSet: (d, si, sl) => addWorkoutSet(S, d, si, sl),
+    deleteWorkoutSet: (d, si, li) => deleteWorkoutSet(S, d, si, li),
     renameExercise: (o, n) => window.ApexWorkoutState.renameExercise(S, o, n, utils),
 
     persistBodyMetrics: (m) => window.ApexBodyState.persistBodyMetrics(S, m, utils),
