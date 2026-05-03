@@ -42,7 +42,8 @@
     restTimes: LS('lrt', { '1': {}, '2': {} }),
     restTimer: LS('lrtm', null),
     recentEx: LS('lrx', { '1': {}, '2': {} }),
-    bodyMetrics: LS('lbm', null)
+    bodyMetrics: LS('lbm', null),
+    exerciseAnchors: LS('lea', {})
   };
 
   const DP = {
@@ -164,7 +165,8 @@
       lrt: S.restTimes,
       lrtm: S.restTimer,
       lrx: S.recentEx,
-      lbm: S.bodyMetrics
+      lbm: S.bodyMetrics,
+      lea: S.exerciseAnchors
     };
   }
 
@@ -437,6 +439,26 @@
       volume: metrics.volume,
       repOnly: metrics.repOnly
     });
+
+    // Update the exercise anchor using the 12RM concept logic
+    if (typeof updateExerciseAnchor === 'function') {
+      // Collect all done sets for this exercise in this session to determine R1, R2, R3
+      const doneSets = slot.sets.filter(s => s.done).map(s => ({
+        setNum: parseInt(s.setNum || 1),
+        weight: parseFloat(s.weight) || 0,
+        reps: parseFloat(s.reps) || 0
+      })).sort((a, b) => a.setNum - b.setNum);
+
+      if (doneSets.length > 0) {
+        const sessionData = {
+          W: doneSets[0].weight,
+          R1: doneSets[0].reps,
+          R2: doneSets.length >= 2 ? doneSets[1].reps : undefined,
+          R3: doneSets.length >= 3 ? doneSets[2].reps : undefined
+        };
+        updateExerciseAnchor(slot.exercise, sessionData);
+      }
+    }
   }
 
   function syncSlotHistoryEntries(slot) {

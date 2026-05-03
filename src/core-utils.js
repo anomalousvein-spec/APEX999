@@ -206,6 +206,9 @@
   }
 
   function estimateTarget10RM(exName, opts={}) {
+    // DEPRECATED: This function is kept for backward compatibility but is no longer used.
+    // The new Self-Correcting Hypertrophy Anchor System (12RM concept) has replaced it.
+    // See getExerciseAnchor() for the new implementation.
     let entries = window.S?.exHist?.[exName] || [];
     if (opts.untilSessionKey && typeof getExerciseSessionHistory === 'function') {
       const history = getExerciseSessionHistory(exName);
@@ -267,6 +270,114 @@
 
     const raw = wt2 > 0 ? tot2 / wt2 : totalEst / weightSum;
     return Math.max(5, Math.round(raw / 5) * 5);
+  }
+
+  /**
+   * Get the current Anchor (smoothed 14RM working weight) for an exercise.
+   * This implements the Self-Correcting Hypertrophy Anchor System from 12RM_Concept.md
+   * @param {string} exName - Exercise name
+   * @returns {number|null} - The current anchor weight in lbs, or null if not calibrated
+   */
+  function getExerciseAnchor(exName) {
+    const anchors = window.S?.exerciseAnchors || {};
+    const anchorData = anchors[exName];
+    if (!anchorData || typeof anchorData.anchor !== 'number') return null;
+    return Math.round(anchorData.anchor);
+  }
+
+  /**
+   * Update the Anchor for an exercise based on session performance.
+   * Implements the three-case logic from 12RM_Concept.md:
+   * - Case 1: First-set failure (R1 < 12)
+   * - Case 2: Intentional last-set AMRAP (R3 > 12)
+   * - Case 3: Normal session (R1 = 12, no AMRAP)
+   * @param {string} exName - Exercise name
+   * @param {Object} sessionData - Session data with reps and weight info
+   * @param {number} sessionData.W - Weight used in the session
+   * @param {number} sessionData.R1 - Reps achieved on set 1
+   * @param {number} [sessionData.R2] - Reps achieved on set 2 (optional)
+   * @param {number} [sessionData.R3] - Reps achieved on set 3 (optional, for AMRAP)
+   */
+  function updateExerciseAnchor(exName, sessionData) {
+    const S = window.S;
+    if (!S || !S.exerciseAnchors) return;
+
+    const { W, R1, R2, R3 } = sessionData;
+    if (!W || !R1) return;
+
+    const constants = {
+      alpha: 0.3,
+      target_RM: 14,
+      auto_nudge: 1.25,
+      perfect_streak_threshold: 2,
+      drop_rep_threshold: 2
+    };
+
+    const anchors = S.exerciseAnchors;
+    if (!anchors[exName]) {
+      anchors[exName] = {
+        anchor: W,
+        perfect_streak_counter: 0
+      };
+    }
+
+    const state = anchors[exName];
+    const A_old = state.anchor;
+    let A_new = A_old;
+    let streak = state.perfect_streak_counter || 0;
+
+    // Helper: compute 14RM estimate from a set using Epley-based formula
+    const compute14RM = (weight, reps) => {
+      return weight * (1 + reps / 30) / (1 + constants.target_RM / 30);
+    };
+
+    // Case 1: First-set failure (R1 < 12)
+    if (R1 < 12) {
+      const W_14RM = compute14RM(W, R1);
+      A_new = constants.alpha * W_14RM + (1 - constants.alpha) * A_old;
+      streak = 0;
+    }
+    // Case 2: Intentional last-set AMRAP (R3 > 12)
+    else if (R3 && R3 > 12) {
+      const W_14RM = compute14RM(W, R3);
+      A_new = constants.alpha * W_14RM + (1 - constants.alpha) * A_old;
+      // Streak continues if R1 was solid (handled below)
+      if (R1 === 12 && (!R2 || (R1 - R2) < constants.drop_rep_threshold)) {
+        streak += 1;
+      }
+    }
+    // Case 3: Normal session (R1 = 12 or R1 >= 12, no AMRAP)
+    else {
+      // Step 1: Rep-drop check
+      if (R2 !== undefined && R2 !== null) {
+        const drop = R1 - R2;
+        if (drop >= constants.drop_rep_threshold) {
+          // Fatigue is high, not a solid session
+          A_new = A_old;
+          streak = 0;
+        } else {
+          // Solid session
+          streak += 1;
+        }
+      } else {
+        // No R2 provided, assume solid
+        streak += 1;
+      }
+
+      // Step 2: Auto-nudge on perfect streak
+      if (streak >= constants.perfect_streak_threshold) {
+        A_new = A_old + constants.auto_nudge;
+        streak = 0;
+      } else {
+        A_new = A_old;
+      }
+    }
+
+    // Update state
+    anchors[exName] = {
+      anchor: A_new,
+      perfect_streak_counter: streak
+    };
   }
 
   function daysAgo(exName) {
@@ -557,6 +668,8 @@
   window.rnd = rnd;
   window.findRepRange = findRepRange;
   window.estimateTarget10RM = estimateTarget10RM;
+  window.getExerciseAnchor = getExerciseAnchor;
+  window.updateExerciseAnchor = updateExerciseAnchor;
   window.sortExerciseHistoryEntries = sortExerciseHistoryEntries;
   window.getExerciseSessionHistory = getExerciseSessionHistory;
   window.countSessionImprovements = countSessionImprovements;
