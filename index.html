@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>APEX</title>
+<!-- PWA manifest -->
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<!-- iOS PWA -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="APEX">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
+<!-- Theme -->
+<meta name="theme-color" content="#0e0e10">
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="./styles.css">
+
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-top">
+    <span class="hdr-title">APEX</span>
+    <span id="bwBadge" class="bw-badge">BLOCK 1 &middot; WK 1</span>
+    <div class="hdr-btns">
+      <button class="hbtn" id="copyBtn" title="Copy workout" aria-label="Copy workout">&#128203;</button>
+      <button class="hbtn" id="exportBtn" title="Export data" aria-label="Export data">&#11014;</button>
+      <button class="hbtn" id="importBtn" title="Import data" aria-label="Import data">&#11015;</button>
+    </div>
+  </div>
+  <div class="ctrl-bar">
+    <span class="ctrl-lbl">Block</span>
+    <div class="pill-grp" id="blockPills"></div>
+    <span class="ctrl-lbl">Week</span>
+    <div class="pill-grp" id="weekPills"></div>
+    <span class="sets-badge" id="setsBadge">2&times;</span>
+  </div>
+  <nav class="nav">
+    <button class="ntab active" data-tab="workout">Workout</button>
+    <button class="ntab" data-tab="body">Body</button>
+    <button class="ntab" data-tab="history">History</button>
+    <button class="ntab" data-tab="analytics">Analytics</button>
+    <button class="ntab" data-tab="sessions">Sessions<span class="nbadge" id="sessBadge"></span></button>
+    <button class="ntab" data-tab="edit">Edit</button>
+  </nav>
+  <div id="dlBanner" class="dl-banner" style="display:none">Deload Week - 1 set per exercise. Focus on recovery.</div>
+  <div class="day-toggle" id="dayToggle"></div>
+</div>
+
+<!-- TABS -->
+<div class="tab active" id="tab-workout"></div>
+<div class="tab" id="tab-body"></div>
+<div class="tab" id="tab-history"></div>
+<div class="tab" id="tab-analytics"></div>
+<div class="tab" id="tab-sessions"></div>
+<div class="tab" id="tab-edit"></div>
+
+<input type="file" id="importFile" accept=".json" style="display:none">
+
+<script src="./app.js"></script>
+<script src="./src/legacy-bridge.js"></script>
+<script src="./src/core-utils.js"></script>
+<script src="./src/storage/apex-storage.js"></script>
+<script src="./src/state-facade.js"></script>
+<script src="./src/runtime-shell.js"></script>
+<script src="./src/shell-header.js"></script>
+<script src="./src/features/workout-core.js"></script>
+<script src="./src/features/workout.js"></script>
+<script src="./src/features/workout-actions.js"></script>
+<script src="./src/features/body.js"></script>
+<script src="./src/features/edit.js"></script>
+<script src="./src/features/review.js"></script>
+<script src="./src/shell-feedback.js"></script>
+<script src="./src/shell-rest-timer.js"></script>
+<script src="./src/shell-ui.js"></script>
+<script src="./src/shell-lifecycle.js"></script>
+<script src="./src/pwa.js"></script>
+<script src="./src/bootstrap.js"></script>
+
+</body>
+</html>

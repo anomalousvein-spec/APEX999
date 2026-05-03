@@ -1,0 +1,271 @@
+2026-04-04
+- Performance hardening: folded per-category exercise-volume maps into the cached weekly review buckets in `src/features/review.js`, so heatmap drill-down modals no longer rescan every session in the selected week when opening a breakdown.
+- Bumped service worker cache to `lift-v92`.
+- Performance hardening: added shared cached weekly-volume buckets and muscle-group lists inside `src/features/review.js` so Analytics, heatmap, and session-derived review views no longer rescan the full session history repeatedly during the same render cycle.
+- Bumped service worker cache to `lift-v91`.
+- Performance hardening: added a shared cached exercise-options list inside `src/features/review.js` so History search and Analytics exercise lookup no longer rebuild the full exercise set from pools/history on every interaction.
+- Bumped service worker cache to `lift-v90`.
+- Performance hardening: removed unnecessary finish/progress recalculation from the live workout `oninput` path in `src/features/workout-actions.js`; typing weight/reps no longer recomputes completion UI when the done-count hasn’t changed.
+- Bumped service worker cache to `lift-v89`.
+- Performance hardening: debounced the History exercise search dropdown in `src/features/review.js` so the search list no longer rebuilds on every keystroke while typing through larger history datasets.
+- Bumped service worker cache to `lift-v88`.
+- Performance hardening: debounced the Analytics exercise picker in `src/features/review.js` so the full analytics panel no longer rerenders on every keystroke while typing into the 1RM exercise search field.
+- Bumped service worker cache to `lift-v87`.
+- Performance hardening: optimized the hot `toggleDone()` workout path in `src/features/workout-actions.js` to update the affected set row, progress signals, and finish-state UI in place instead of forcing a full workout rerender on every set completion toggle.
+- Bumped service worker cache to `lift-v86`.
+- Architecture hardening: cleaned up the facade contract by removing misleading `await window.ApexState.update(...)` usage in active modules. Durable helpers are still awaited, while generic in-memory `update()` calls are now treated synchronously to better match actual behavior.
+- Updated `src/features/workout-actions.js` and `src/features/body.js` so workflow code no longer implies IndexedDB durability where only immediate state mutation was occurring.
+- Bumped service worker cache to `lift-v85`.
+- Performance hardening: routed live workout set typing through a lightweight staged path in `src/state-facade.js` so `oninput` updates no longer force an immediate IndexedDB flush on every keystroke; blur, set completion, add/delete, and workout completion still use the durable commit path.
+- Stability hardening: prevented repeated History-tab document click listeners from accumulating in `src/features/review.js` by binding the outside-click handler only once.
+- Diagnostics: refined storage readiness reporting in `src/state-facade.js` and `src/features/edit.js` so the Storage Health UI can distinguish pending init, ready state, and fallback mode more truthfully.
+- Bumped service worker cache to `lift-v84`.
+- Regression fix: corrected workout set blur handling so weight/reps inputs no longer render `[object Promise]` when values are normalized; the field now updates synchronously while persistence continues asynchronously underneath.
+- Bumped service worker cache to `lift-v83`.
+- Regression fix: restored active workout button behavior by correcting `src/features/workout-actions.js` so `doComplete()` is `async`; the previous non-async `await` usage could prevent the module from parsing and leave workout controls unresponsive.
+- Hardening: fixed `normalizeSetField()` in `src/features/workout-actions.js` to resolve state through `getS()` before reading the current day, avoiding blur-time runtime errors.
+- Bumped service worker cache to `lift-v82`.
+- Diagnostics: Added `ApexRuntime.getRuntimeStatus()` in `src/runtime-shell.js` to summarize shell readiness, renderer fallback usage, legacy startup availability, and storage status for safer smoke testing.
+- Diagnostics: Added a one-time boot console info log in `src/bootstrap.js` so local/Netlify/PWA checks can confirm the active runtime path without touching workout or session logic.
+- Bumped service worker cache to `lift-v81`.
+- Architecture: Completed codebase standardization. Renamed all feature files to remove "-live" suffix (e.g., `body.js`, `workout.js`, `review.js`).
+- Architecture: Strengthened Facade-First state ownership. All mutations for workouts, sessions, and body metrics now use `async` methods in `ApexState` and ensure IndexedDB durability via `ApexStorage.flush()`.
+- Storage: Improved Storage Health UI in the Edit tab with a new "Force Sync to Storage" action for manual recovery from state drift.
+- QOL Pass 3: Overhauled Body tab with detailed weight and waist trend charts (EMA-smoothed) and prediction confidence scoring.
+- QOL Pass 3: Added "Last Session Sets" collapsible to active workout cards for immediate volume reference.
+- QOL Pass 2: Implemented Manual Exercise Swap. Users can now choose a specific exercise from the pool category via a new swap icon (⇌) on workout cards.
+- QOL Pass 2: Added "Duplicate Set" helper (✚) to set rows, allowing one-tap duplication of weight and reps for the next set.
+- QOL Pass 2: Added "Volume Milestones" to Exercise History detail, showing a chronological record of PR volume achievements and a new progression chart.
+- Architecture: Standardized `duplicateSet` and `swapExercise` actions in `src/features/workout-actions.js`.
+- Hardening: Exported body smoothing utilities in `src/core-utils.js` to resolve runtime errors in modular body feature.
+- Bumped service worker cache to `lift-v80`.
+
+2026-04-04
+- QOL Pass 1: Implemented Live PR detection during workouts. Added real-time volume calculation and visual feedback (`live-pr-dot`) on set rows and a "⭐ New PR Volume!" badge on exercise cards.
+- QOL Pass 1: Enhanced Volume Heatmap with interactive drill-down. Tapping a week cell now displays an exercise-specific volume breakdown modal.
+- QOL Pass 1: Added "Volume Distribution" visualization to the Analytics tab, showing muscle group volume percentages over the last 30 days.
+- QOL Pass 1: Implemented inline session note editing in the Sessions tab.
+- QOL Pass 1: Improved exercise search UX with a clear button (X), Escape key support, and auto-closing on click-outside.
+- Architecture: Added `getBestExerciseVolume` to `src/core-utils.js` for centralized PR calculations.
+- Bumped service worker cache to `lift-v77`.
+
+2026-04-02
+- Storage Authority Migration: Successfully transitioned `sessions`, live `workouts`, `bodyMetrics`, and `exHist` to "Preferred Read" status at boot.
+- Converted all primary state mutations (`addSession`, `updateWorkoutSet`, `persistBodyMetrics`, etc.) in `src/state-facade.js` to `async` methods that prioritize IndexedDB as the source of truth while maintaining legacy `localStorage` as a fallback.
+- Architecture Standardization: Enforced the `ApexState` facade pattern across all modular feature files, replacing global `S` access with `getS()` and standardizing state updates.
+- Storage Health UI: Implemented real-time IndexedDB status, cached key counts, and sync drift reporting in the Edit tab (`src/features/edit-live.js`).
+- Session Reconciliation: Added `ApexState.reconcileSessions()` to allow manual synchronization between memory and IndexedDB.
+- Hollowed out `app.js` into a minimal ~70-line legacy bridge, delegating core logic and data structures to the modular runtime.
+- Consolidated `isPlainObject` utility and global constants into `src/core-utils.js`.
+- Verified system stability with end-to-end Playwright tests for boot hydration, workout mutations, and session completion.
+- Bumped service worker cache to `lift-v76`.
+
+2026-04-02
+- Phase 4 Enhancements: Transitioned live `workouts` to "Preferred Read" status at boot.
+- Refined workout mutation methods (`updateWorkoutSlot`, `updateWorkoutSet`, etc.) to prioritize IndexedDB as the primary persistence authority.
+- Phase 3 Enhancements: Promoted `sessions` to "Preferred Read" status at boot, enabling reliable session recovery from IndexedDB.
+- Refined `addSession` and `deleteSession` to prioritize IndexedDB writes as the primary persistence authority.
+- Phase 2 Enhancements: Added "Storage Health" section to the Edit tab for real-time IndexedDB status and sync drift reporting.
+- Implemented `ApexState.reconcileSessions()` to allow manual synchronization between memory and IndexedDB.
+- Consolidated `isPlainObject` utility into `src/core-utils.js`, reducing redundancy across the bridge and facade.
+- Verified system stability with end-to-end Playwright testing.
+- Architecture Standardization: Completed a major pass across all modular feature files (`workout-live.js`, `body-live.js`, `review-live.js`, `edit-live.js`, `shell-header.js`) to enforce the `ApexState` facade pattern.
+- Feature modules now access state through `getS()` (resolving `ApexState.get()`) and perform mutations through `ApexState.update()` or dedicated facade helpers, ensuring consistent mirroring between memory, localStorage, and IndexedDB.
+- Hollowed out remaining legacy logic in `app.js` and transitioned global shell actions (like workout sharing) to the modular facade.
+- Verified stable end-to-end functionality (boot, logging, rest timer, completion, and session saving) using Playwright.
+- Bumped service worker cache to `lift-v76`.
+- Monolith reduction: aggressively reduced `app.js` by moving core data (`DP`, `CAT_LABELS`) and logic (`computeSets`, `migratePools`, etc.) to `state-facade.js`.
+- Cleaned up redundant logic in `app.js` that was already superseded by modular feature files.
+- Bumped service worker cache to `lift-v75`.
+- Storage migration: migrated live workout logging and exercise pool management to facade-first persistence. Added `updateWorkoutSlot`, `updateWorkoutSet`, `addWorkoutSet`, and `deleteWorkoutSet` to `ApexState` for granular, IndexedDB-mirrored workout updates.
+- Centralized pool management in `ApexState` with `updatePoolExercise`, `addPoolExercise`, and `deletePoolExercise`.
+- Architecture cleanup: consolidated core workout calculation logic into `src/core-utils.js` and exercise/history management into `src/state-facade.js`.
+- Refactored `workout-actions-live.js` and `edit-live.js` to use the new centralized helpers, reducing duplication and improving state consistency.
+- Added `ApexState.renameExercise` to handle complex cross-state renaming for history, prefill, and active workouts.
+- Storage migration: migrated `sessions` and related workout-completion state updates to facade-first persistence. Added `ApexState.addSession` and `ApexState.deleteSession` to centralize history syncing and multi-key storage updates.
+- Bumped service worker cache to `lift-v74`.
+- Stability hardening: fixed `src/state-facade.js` boot recovery so a persisted `restTimer` can hydrate when live startup state is empty or invalid, instead of being skipped by the old gate.
+- Bumped service worker cache to `lift-v71` so installed PWAs pick up the facade recovery fix.
+- Fixed app startup so opening `index.html` directly no longer hangs on IndexedDB initialization.
+- Added IndexedDB availability and timeout fallbacks in `src/storage/apex-storage.js`.
+- Added bootstrap startup timeout in `src/bootstrap.js` so the workout UI renders from cached/local state even when storage init stalls.
+- Restored the live runtime files (`app.js`, `index.html`, `sw.js`) from `backupsource` after the modularized shell remained non-functional.
+- Re-established the known-good monolithic app as the active entrypoint so the app can run again from `index.html` and Netlify.
+- Bumped the service worker cache version to force the restored app shell to replace stale cached modular assets.
+- Phase 1 architecture refactor: moved app startup boot into `src/bootstrap.js` while keeping all feature logic and PWA registration in the proven monolithic `app.js`.
+- Replaced direct boot calls in `app.js` with `window.ApexApp.start()` so future refactors can separate shell concerns without touching workout, body, history, or edit logic.
+- Updated `index.html` and `sw.js` to load/cache the bootstrap helper and bumped the cache version again for the new shell entrypoint.
+- Phase 2 architecture refactor: moved service-worker registration and update checks out of `app.js` into `src/pwa.js`.
+- Updated `index.html` and `sw.js` so the PWA shell now loads boot and PWA concerns from dedicated helper files while feature behavior remains in `app.js`.
+- Bumped the service worker cache version again so installed and cached builds pick up the new shell wiring.
+- Phase 3 architecture refactor: added `src/shell-ui.js` to own tab navigation and top-bar button wiring as the new shell layer.
+- Loaded and cached the shell helper from `index.html` and `sw.js`, then bumped the cache version again.
+- Kept the older in-file wiring in `app.js` as a temporary fallback because of encoding-safe patch constraints; the new shell helper now overrides those bindings at runtime.
+- Phase 4 architecture refactor: added `src/shell-lifecycle.js` to give the shell layer an explicit, idempotent setup entrypoint.
+- Updated `src/bootstrap.js` to initialize the shell lifecycle before starting the app.
+- Updated `index.html` and `sw.js` to load/cache the shell lifecycle helper and bumped the cache version again.
+- Phase 5 architecture refactor: extracted shared feedback UI into `src/shell-feedback.js` for toast, modal, and session-summary behavior.
+- Loaded and cached the feedback helper from `index.html` and `sw.js`, then bumped the cache version again.
+- Kept the original feedback functions in `app.js` as a temporary fallback, while the dedicated feedback module now overrides them at runtime.
+- Phase 6 architecture refactor: extracted shared formatting/date/input helpers into `src/core-utils.js`.
+- Loaded and cached the core helper module from `index.html` and `sw.js`, then bumped the cache version again.
+- Established a reusable utility layer for future feature splits without changing the app's working feature flow.
+- Phase 7 architecture refactor: added a fresh review feature module at `src/features/review-live.js` from the current working history/analytics/sessions slice.
+- Loaded and cached the review module from `index.html` and `sw.js`, then bumped the cache version again.
+- Kept the original review logic in `app.js` as a fallback while the dedicated review module now overrides that feature layer at runtime.
+- Phase 8 architecture refactor: added a fresh edit feature module at `src/features/edit-live.js` from the current working pool-management/import-export slice.
+- Loaded and cached the edit module from `index.html` and `sw.js`, then bumped the cache version to `lift-v21`.
+- Kept the original edit/admin logic in `app.js` as a fallback while the dedicated edit module now overrides that feature layer at runtime.
+- Phase 9 architecture refactor: added a fresh body feature module at `src/features/body-live.js` from the current working body-tracking slice.
+- Loaded and cached the body module from `index.html` and `sw.js`, then bumped the cache version to `lift-v22`.
+- Kept the original body-tracking logic in `app.js` as a fallback while the dedicated body module now overrides that feature layer at runtime.
+- Phase 10 architecture refactor: extracted the header and workout-control shell seam into `src/shell-header.js`.
+- Loaded and cached the header shell module from `index.html` and `sw.js`, then bumped the cache version to `lift-v23`.
+- Kept the original header control logic in `app.js` as a fallback while the dedicated shell header module now overrides block, week, and day controls at runtime.
+- Phase 11 architecture refactor: extracted the workout rendering layer into `src/features/workout-live.js`.
+- Loaded and cached the workout view module from `index.html` and `sw.js`, then bumped the cache version to `lift-v24`.
+- Kept the workout mutation engine in `app.js` as a fallback while the dedicated workout module now overrides `renderWorkout()` and finish-button refresh behavior at runtime.
+- Phase 12 architecture refactor: extracted the workout action and completion layer into `src/features/workout-actions-live.js`.
+- Loaded and cached the workout actions module from `index.html` and `sw.js`, then bumped the cache version to `lift-v25`.
+- Kept the original workout action logic in `app.js` as a fallback while the dedicated workout actions module now overrides rerolls, set editing, set logging, rest controls, and workout completion at runtime.
+- Phase 13 architecture refactor: extracted the workout generation and pinning core into `src/features/workout-core-live.js`.
+- Loaded and cached the workout core module from `index.html` and `sw.js`, then bumped the cache version to `lift-v26`.
+- Kept the original workout core logic in `app.js` as a fallback while the dedicated workout core module now overrides slot definitions, workout generation, and pin sanitation at runtime.
+- Phase 14 architecture refactor: added a shared runtime facade at `src/runtime-shell.js` to centralize app refresh and state-access entrypoints.
+- Updated `src/bootstrap.js` and `src/shell-ui.js` to route startup and tab rendering through the runtime facade, then bumped the cache version to `lift-v27`.
+- Kept direct monolith entrypoints in place as a fallback while the runtime facade now provides a safer consolidation layer for future cleanup work.
+- Phase 15 architecture refactor: added a shared state facade at `src/state-facade.js` to centralize state/persist/migration access above the monolith.
+- Updated `src/runtime-shell.js`, `index.html`, and `sw.js` to route runtime state access through the facade, then bumped the cache version to `lift-v28`.
+- Kept direct `S` and persistence functions in `app.js` as a fallback while the state facade now provides a safer bridge for future cleanup and storage work.
+- Phase 16 architecture cleanup: added `src/legacy-bridge.js` to snapshot original `app.js` entrypoints before modular overrides load.
+- Updated `src/runtime-shell.js`, `index.html`, and `sw.js` to preserve an explicit legacy fallback path, then bumped the cache version to `lift-v29`.
+- This creates a safer cleanup path for future `app.js` reduction by making the original monolith behavior addressable through `window.ApexLegacy` instead of only through implicit globals.
+- Phase 17 architecture cleanup: removed the duplicate self-running initialization from `src/shell-ui.js`.
+- The shell UI layer is now initialized only through `src/shell-lifecycle.js` and `src/bootstrap.js`, reducing overlapping startup paths.
+- Bumped the cached shell version to `lift-v30` so installed PWAs pick up the controlled shell startup flow.
+- Phase 18 architecture cleanup: expanded the runtime facade with focused refresh helpers and switched key modular files to use the new runtime/state facades more consistently.
+- Updated `src/shell-header.js`, `src/features/edit-live.js`, and `src/features/review-live.js` so modular code relies less on direct `safePersist()` and scattered render calls.
+- Bumped the cached shell version to `lift-v31` so installed PWAs pick up the facade-backed cleanup pass.
+- Phase 19 architecture cleanup: changed modular startup to prefer the facade-driven runtime path instead of booting through `window.ApexApp.start()` during normal operation.
+- Updated `src/runtime-shell.js` so the legacy monolith start function is now an explicit fallback only if the modular refresh/start path fails.
+- Bumped the cached shell version to `lift-v32` so installed PWAs pick up the cleaner startup dependency chain.
+- Phase 20 architecture cleanup: expanded facade-backed refresh and persistence routing across more active modular files.
+- Updated `src/runtime-shell.js` with focused workout/body/review/edit refresh helpers, then switched `src/shell-header.js`, `src/features/edit-live.js`, and `src/features/review-live.js` to use `ApexRuntime` and `ApexState` more consistently instead of direct `safePersist()` and scattered render calls.
+- Bumped the cached shell version to `lift-v33` so installed PWAs pick up the broader facade-backed cleanup pass.
+- Phase 21 architecture cleanup: routed the active workout and body modules through the shared state/runtime facades more consistently.
+- Updated `src/features/workout-actions-live.js`, `src/features/workout-core-live.js`, and `src/features/body-live.js` to use small facade-backed persist/refresh helpers instead of direct `safePersist()` and direct render calls for most live state changes.
+- Bumped the cached shell version to `lift-v34` so installed PWAs pick up the workout/body cleanup pass.
+- Phase 22 architecture cleanup: normalized shell tab routing and workout note persistence through the modular facade layer.
+- Updated `src/shell-ui.js` to route tab/header refresh through small helper functions backed by `ApexRuntime`, and updated `src/features/workout-live.js` so workout notes persist through a dedicated facade-backed helper instead of inline `safePersist()` calls.
+- Bumped the cached shell version to `lift-v35` so installed PWAs pick up the shell/workout-view cleanup pass.
+- Phase 23 architecture cleanup: moved more render fallback responsibility into `src/runtime-shell.js` instead of scattering it across raw globals.
+- Added small renderer-resolution helpers in `src/runtime-shell.js` so tab refresh and focused refresh methods now prefer live modular renderers and can fall back through `window.ApexLegacy` when needed.
+- Bumped the cached shell version to `lift-v36` so installed PWAs pick up the centralized runtime fallback cleanup.
+- Phase 24 architecture cleanup: replaced bulky inline fallback expressions in `src/shell-header.js` and `src/features/edit-live.js` with local facade-backed helper functions.
+- Standardized persist and refresh calls in those modules so shell/edit actions now read through shared helper seams instead of repeating long `ApexRuntime` or raw-render fallback chains.
+- Bumped the cached shell version to `lift-v37` so installed PWAs pick up the cleaner shell/edit cleanup pass.
+- Phase 25 architecture cleanup: removed the redundant bottom-of-file event binding layer from `app.js` while keeping the legacy functions themselves available as fallback.
+- Trimmed old monolith bindings for import, header buttons, and tab clicks because those responsibilities are now actively owned by the modular shell/edit layers loaded after `app.js`.
+- Bumped the cached shell version to `lift-v38` so installed PWAs pick up the first direct `app.js` glue-reduction pass.
+- Phase 26 architecture cleanup: removed the legacy monolith tab-routing function from `app.js` and redirected the old session-summary close path through the modular shell handoff.
+- `app.js` no longer owns active tab switching; the live shell layer now fully owns tab routing while the remaining legacy close path safely checks `window.ApexShell.switchTab()` first.
+- Bumped the cached shell version to `lift-v39` so installed PWAs pick up the next direct `app.js` shell-reduction pass.
+- Phase 27 architecture cleanup: removed the duplicate monolith feedback definitions from `app.js` now that `src/shell-feedback.js` fully owns active toast, modal, and session-summary behavior.
+- Replaced the old `app.js` feedback block with continuity comments so the modular shell-feedback layer is the single active owner of those globals.
+- Bumped the cached shell version to `lift-v40` so installed PWAs pick up the next direct `app.js` feedback-reduction pass.
+- Phase 28 architecture cleanup: formalized the legacy startup contract so modular bootstrap fallback routes through one explicit legacy start seam.
+- Updated `src/bootstrap.js` to prefer `window.ApexLegacy.appStart` for fallback startup, and converted `app.js` boot into a named `legacyStartApp()` helper exposed through `window.ApexApp.start`.
+- Bumped the cached shell version to `lift-v41` so installed PWAs pick up the clearer startup fallback contract.
+- Phase 29 architecture cleanup: shifted the legacy startup contract away from `window.ApexApp.start` and onto the explicit `legacyStartApp()` seam.
+- Updated `src/legacy-bridge.js` and `src/bootstrap.js` to prefer the named legacy start function, and simplified `app.js` so it now exports `window.legacyStartApp = legacyStartApp` instead of maintaining a separate `ApexApp` wrapper object.
+- Bumped the cached shell version to `lift-v42` so installed PWAs pick up the leaner legacy-start contract.
+- Phase 30 architecture cleanup: removed the last live fallback references to `window.ApexApp.start` so startup now consistently resolves through `legacyStartApp()`.
+- Updated `src/bootstrap.js` and `src/legacy-bridge.js` so the active fallback path now uses only `window.ApexLegacy.appStart` and `window.legacyStartApp`, eliminating the stale `ApexApp` startup branch from runtime code.
+- Bumped the cached shell version to `lift-v43` so installed PWAs pick up the fully aligned legacy-start cleanup.
+- Phase 31 storage foundation: activated the dormant `src/storage/apex-storage.js` layer as a non-authoritative background mirror behind the live localStorage flow.
+- Loaded the storage module from `index.html`, added batch mirroring support in `src/storage/apex-storage.js`, updated `src/state-facade.js` to mirror persisted legacy keys into `ApexStorage`, and had `src/bootstrap.js` initialize the storage layer after normal app startup.
+- Bumped the cached shell version to `lift-v44` so installed PWAs pick up the new storage-boundary groundwork without changing the app's live source of truth.
+- Phase 32 storage foundation: added read-only persisted snapshot helpers so the runtime can inspect mirrored storage state without depending on it for live rendering.
+- Updated `src/state-facade.js` with `getPersistedValue()` and `getPersistedSnapshot()`, then exposed matching read-only snapshot helpers from `src/runtime-shell.js` for future migration diagnostics.
+- Bumped the cached shell version to `lift-v45` so installed PWAs pick up the read-only storage-inspection layer.
+- Phase 33 storage diagnostics: added a live-vs-mirrored storage drift report so startup can compare memory state against the mirrored storage snapshot without changing runtime behavior.
+- Updated `src/state-facade.js` with snapshot comparison helpers and a `getStorageDriftReport()` method, exposed that report through `src/runtime-shell.js`, and added a startup console warning hook in `src/bootstrap.js` when drift is detected.
+- Bumped the cached shell version to `lift-v46` so installed PWAs pick up the storage drift diagnostics layer.
+- Phase 34 storage diagnostics: added a resolved boot snapshot that can prefer mirrored storage for missing boot metadata, but only for startup reporting.
+- Updated `src/state-facade.js` with `getResolvedBootSnapshot()`, exposed it through `src/runtime-shell.js`, and added a console info hook in `src/bootstrap.js` when startup diagnostics fall back to persisted storage values.
+- Bumped the cached shell version to `lift-v47` so installed PWAs pick up the diagnostic boot-resolution layer.
+- Phase 35 storage migration: introduced the first true live read fallback, limited to invalid boot metadata only.
+- Updated `src/state-facade.js` with `hydrateBootStateFromStorage()` for `currentDay`, `curBlock`, `curWeek`, and `_activeSessionId`, exposed it through `src/runtime-shell.js`, and had `src/bootstrap.js` run that hydration before first render while logging when it changes anything.
+- Bumped the cached shell version to `lift-v48` so installed PWAs pick up the edge-case boot-state hydration layer.
+- Phase 36 storage migration: extended boot-time recovery to lightweight day-keyed maps when their in-memory shape is clearly invalid.
+- Updated `src/state-facade.js` to validate and recover `notes` and `restTimes` from mirrored storage only when the live values are malformed, keeping workouts and heavier training state untouched.
+- Bumped the cached shell version to `lift-v49` so installed PWAs pick up the lightweight map-recovery layer.
+- Phase 37 storage migration: extended the same invalid-shape recovery pattern to additional lightweight day-keyed maps used for exercise continuity.
+- Updated `src/state-facade.js` to validate and recover `recentEx` and `prefill` from mirrored storage only when their live in-memory shape is malformed, without touching workouts, sessions, or history ownership.
+- Bumped the cached shell version to `lift-v50` so installed PWAs pick up the lightweight continuity-map recovery layer.
+- Phase 38 storage migration: extended invalid-shape boot recovery to the remaining lightweight day-keyed control maps.
+- Updated `src/state-facade.js` to validate and recover `pins` and `locks` from mirrored storage only when their live in-memory shape is malformed, still leaving workouts, sessions, and history under the existing live ownership path.
+- Bumped the cached shell version to `lift-v51` so installed PWAs pick up the lightweight control-map recovery layer.
+- Phase 39 storage hardening: tightened lightweight recovery validation for session/body continuity values without expanding persisted-storage ownership.
+- Updated `src/state-facade.js` so `bodyMetrics` recovery now checks for a more realistic live shape before hydrating, `restTimer` recovery now uses shared normalization helpers, and `startTime` validation now only accepts parseable date strings or `null`.
+- Bumped the cached shell version to `lift-v52` so installed PWAs pick up the stricter lightweight storage-recovery rules.
+- Phase 40 storage migration: extended malformed-shape boot recovery to the lightest remaining history/session continuity containers.
+- Updated `src/state-facade.js` so `exHist` and `sessions` can recover from mirrored storage only when their live in-memory shape is invalid, keeping workouts and other live-owned training state untouched during normal operation.
+- Bumped the cached shell version to `lift-v53` so installed PWAs pick up the added continuity recovery layer.
+- Phase 41 storage migration: extended malformed-shape boot recovery to the heaviest remaining planning containers without changing normal ownership.
+- Updated `src/state-facade.js` so `pools` and `workouts` can recover from mirrored storage only when their live shape is invalid, and re-runs pool migration after persisted pool recovery to keep the structure aligned with current defaults.
+- Bumped the cached shell version to `lift-v54` so installed PWAs pick up the heavier malformed-state recovery layer.
+- Phase 42 storage migration: introduced the first low-risk preferred boot read for a live slice while preserving fast startup fallbacks.
+- Updated `src/state-facade.js` so `notes` and `restTimes` can prefer persisted storage at boot when the live values are still blank defaults, and updated `src/bootstrap.js` to give storage a short warmup window before first hydration without waiting long enough to risk the old blank-start issue.
+- Bumped the cached shell version to `lift-v55` so installed PWAs pick up the first preferred-read storage migration layer.
+- Phase 43 storage migration: extended the preferred boot-read pattern to lightweight exercise continuity maps.
+- Updated `src/state-facade.js` so `prefill` and `recentEx` can now prefer persisted storage at boot when the live values are still valid but empty defaults, keeping the same malformed-or-empty-only safety gate used for the earlier low-risk slices.
+- Bumped the cached shell version to `lift-v56` so installed PWAs pick up the expanded preferred-read continuity layer.
+- Phase 44 storage migration: extended the preferred boot-read pattern to lightweight workout control maps.
+- Updated `src/state-facade.js` so `pins` and `locks` can now prefer persisted storage at boot when the live values are malformed or still empty defaults, using the same guarded continuity pattern as the earlier low-risk preferred-read slices.
+- Bumped the cached shell version to `lift-v57` so installed PWAs pick up the expanded workout-control continuity layer.
+- Phase 45 storage migration: routed the first live write slice through dedicated state-facade persistence helpers.
+- Updated `src/state-facade.js` with `persistNotesForDay()` and `persistRestTimeForSlot()`, then switched `src/features/workout-live.js` and `src/features/workout-actions-live.js` to use those helpers so notes and rest-time writes now hit the modular storage layer first while legacy `safePersist()` remains as the fallback sync path.
+- Bumped the cached shell version to `lift-v58` so installed PWAs pick up the first write-authority transition step.
+- Phase 46 storage migration: routed the first active pin/lock writes through dedicated state-facade helpers.
+- Updated `src/state-facade.js` with guarded `pins` and `locks` persistence helpers, then switched `src/features/workout-actions-live.js` pin toggles and `src/shell-header.js` lock resets to use those helpers so workout-control state now reaches the modular storage layer first while legacy persistence remains as fallback.
+- Bumped the cached shell version to `lift-v59` so installed PWAs pick up the next write-authority transition step.
+- Phase 47 storage migration: routed the active prefill snapshot write through a dedicated state-facade helper.
+- Updated `src/state-facade.js` with `persistPrefillForDay()`, then switched the workout-completion flow in `src/features/workout-actions-live.js` to use that helper so next-session carryover data now reaches the modular storage layer first while the existing legacy persist path remains in place.
+- Bumped the cached shell version to `lift-v60` so installed PWAs pick up the prefill write-authority transition step.
+- Phase 48 storage migration: routed the active recent-exercise continuity write through a dedicated state-facade helper.
+- Updated `src/state-facade.js` with `persistRecentExercisesForWorkout()`, then switched the workout-completion flow in `src/features/workout-actions-live.js` to use that helper so anti-repeat continuity data now reaches the modular storage layer first while the legacy persist path remains available.
+- Bumped the cached shell version to `lift-v61` so installed PWAs pick up the recent-exercise write-authority transition step.
+- Phase 49 storage migration: routed active body-metrics writes through a dedicated state-facade helper.
+- Updated `src/state-facade.js` with `persistBodyMetrics()`, then switched the body feature write paths in `src/features/body-live.js` to use that helper so profile updates, trend-setting changes, and body-log edits now reach the modular storage layer first while the legacy persist path remains available.
+- Updated `MISSION.md` to reflect the current hybrid modular/storage architecture and the shift toward a stable v1 end state instead of open-ended extraction work.
+- Bumped the cached shell version to `lift-v62` so installed PWAs pick up the body-metrics write-authority transition step.
+- Phase 50 storage migration: routed active block/week/day shell selection writes through a dedicated state-facade helper.
+- Updated `src/state-facade.js` with `persistHeaderState()`, then switched `src/shell-header.js` to use that helper for block, week, and day changes so header selection state now reaches the modular storage layer first while legacy persistence remains available as fallback.
+- Bumped the cached shell version to `lift-v63` so installed PWAs pick up the shell-selection write-authority transition step.
+- Documentation continuity pass: rewrote `MISSION.md` to better reflect the current stable hybrid release state, the real modular/storage architecture, and the recommended future roadmap from this checkpoint.
+- Added explicit sections for release status, current architecture state, completed work, facade-first ownership, stable v1 checkpoint, future roadmap, and testing guidance so future sessions can resume with less ambiguity.
+- Documentation continuity pass: created a real kickoff prompt in `STARTHERE.txt` for future threads.
+- Added a concise restart prompt that instructs future sessions to read `MISSION.md`, `updatelog.txt`, and `CONTEXT.txt`, acknowledges the current Stable Hybrid V1 architecture, and reinforces the project's safety-first continuation rules.
+- Added one-time startup diagnostics in `src/runtime-shell.js` to warn in the console when a tab renderer is missing (would otherwise fail silently).
+- Bumped service worker cache to `lift-v64` so the updated cached app shell ships to installed PWAs.
+- Added one-time shell wiring diagnostics in `src/shell-lifecycle.js` for `setupShellUi` and `switchTab` availability.
+- Bumped service worker cache to `lift-v65` so installed PWAs ship the updated shell diagnostics.
+- Added global `error` and `unhandledrejection` logging in `src/bootstrap.js` (prefixed `APEX`) to surface runtime failures during smoke testing.
+- Bumped service worker cache to `lift-v66` so installed PWAs pick up the bootstrap error hooks.
+- Body tab: goal-date forecast now blends 7-day recent pace, configured rate window, and overall smoothed trend; confidence messaging strengthens with more logs and history span; prominent estimated date UI (`body-goal-eta` styles).
+- Bumped service worker cache to `lift-v68` for body goal forecast + styles.
+- Pre-deploy: replaced `_headers.txt` with Netlify-standard `_headers` (same cache-control rules) so headers apply on publish.
+- Added versioned `netlify.toml` (`publish = "."`, SPA `/*` → `index.html` rewrite) and `/styles.css` `Cache-Control: no-cache` in `_headers` for non-SW fetches.
+- Pre-deploy cache hardening: added `Cache-Control: no-cache` rules for `/app.js` and `/src/*` in `_headers` so Netlify and installed PWAs do not serve stale modular runtime JS across deployments.
+- Workout UI cue: added a non-persistent warm-up reminder line in the warm-up box and a purely visual per-exercise `Warm-up` checkbox in the workout card header. The checkbox state is session-only in module memory, resets on refresh, and does not touch `S`, localStorage, analytics, history, export, or workout logic.
+- Bumped service worker cache to `lift-v69` so installed PWAs pick up the warm-up visual cues.
+- Workout UI cue refinement: removed the per-exercise `Warm-up` checkbox, kept the top warm-up-box reminder only, and changed that reminder to the app's bright cyan for better visibility. No workout logic, persistence, or data flow was changed.
+- Bumped service worker cache to `lift-v70` so installed PWAs pick up the refined warm-up reminder UI.
+- Pre-deploy cleanup: fixed visible encoding artifacts in `index.html` by replacing corrupted header symbols/icons with safe HTML entities/plain text so the Netlify/PWA build renders cleanly.
+- Monolith reduction & Logic consolidation: identified and restored critical missing logic caused by the extraction.
+- Consolidated history retrieval (`getExerciseSessionHistory`, `sortExerciseHistoryEntries`) and session summary logic (`countSessionImprovements`) into `src/core-utils.js`.
+- Extracted and modularized the audio context and rest timer logic into `src/shell-rest-timer.js`.
+- Standardized boot-time recovery and schema normalization for `restTimer` and `bodyMetrics` in `src/state-facade.js`.
+- Bumped service worker cache to `lift-v76` to ship the modular shell refinements.
+- Functional verification: confirmed end-to-end "Finish Workout" flow is stable using Playwright.

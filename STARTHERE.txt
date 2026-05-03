@@ -1,0 +1,50 @@
+I am continuing work on my personal workout tracking PWA called **APEX Workout Tracker**.
+
+Before doing anything else, please read these files fully:
+- `MISSION.md`
+- `updatelog.txt`
+- `CONTEXT.txt`
+
+Project status:
+- This app is currently at a **Stable Hybrid V1** checkpoint.
+- It is a vanilla JS static PWA deployed on Netlify and used primarily from my iPhone home screen.
+- The app is now modularized enough for stable daily use, but it still keeps `app.js` and legacy localStorage behavior as fallback safety layers.
+- IndexedDB is adapted and active through the modular storage layer, but it is **not yet the sole source of truth**.
+
+Current architecture:
+- Active shell/runtime logic lives in `src/bootstrap.js`, `src/pwa.js`, `src/shell-ui.js`, `src/shell-lifecycle.js`, `src/shell-feedback.js`, and `src/shell-header.js`
+- Active feature logic lives in `src/features/`
+- Shared runtime/state coordination lives in `src/runtime-shell.js` and `src/state-facade.js`
+- IndexedDB-backed storage support lives in `src/storage/apex-storage.js`
+- `app.js` still exists as the fallback continuity layer
+- `backupsource/` remains the original monolithic rollback point
+
+Important working assumptions:
+- The app is currently functional
+- Never break the runtime
+- Keep changes incremental and reversible
+- Preserve fallback behavior unless there is a strong reason not to
+- Prefer small, low-risk improvements over aggressive rewrites
+
+Required workflow:
+1. Confirm you read `MISSION.md`, `updatelog.txt`, and `CONTEXT.txt`
+2. Summarize the app's current state before proposing changes
+3. Explain the next safest step
+4. Proceed carefully and incrementally
+5. Update `updatelog.txt` after meaningful changes
+
+Testing expectations:
+- Test locally by opening `index.html`
+- Test Netlify after changes when relevant
+- If shell/service worker files changed, hard refresh or reinstall the iPhone PWA
+
+Current strategic guidance:
+- Treat the app as a stable release, not a broken refactor
+- Do not rush heavyweight migrations for `sessions` or `workouts`
+- If future storage work continues, favor cautious facade-first changes
+- If there is no clear high-value improvement, it is acceptable to stop at the current stable checkpoint
+
+Deployment note:
+- `extras/`, `backupsource/`, `CONTEXT.txt`, `MISSION.md`, `updatelog.txt`, and backup JSON files are not part of the Netlify deploy bundle
+
+When responding, optimize for continuity, caution, and preserving daily usability.
