@@ -605,10 +605,48 @@
       pf[slot.exercise] = slot.sets.map(log => ({ weight: log.weight || '', reps: log.reps || '' }));
     });
 
+    // PHASE 1: Per-session anchor update with intent detection and feedback
+    // Collect session data for each exercise and update anchors at session level
+    const anchorUpdates = [];
+    exercises.forEach(ex => {
+      const slot = workout.find(s => s.exercise === ex.name);
+      if (!slot || slot.isWarmup) return;
+
+      // Collect all done sets for this exercise to determine R1, R2, R3
+      const doneSets = slot.sets.filter(s => s.done).map(s => ({
+        setNum: parseInt(s.setNum || 1),
+        weight: parseFloat(s.weight) || 0,
+        reps: parseFloat(s.reps) || 0
+      })).sort((a, b) => a.setNum - b.setNum);
+
+      if (doneSets.length > 0 && typeof updateExerciseAnchor === 'function') {
+        const sessionData = {
+          W: doneSets[0].weight,
+          R1: doneSets[0].reps,
+          R2: doneSets.length >= 2 ? doneSets[1].reps : undefined,
+          R3: doneSets.length >= 3 ? doneSets[2].reps : undefined
+        };
+
+        // Detect AMRAP intent: R3 > 12 indicates intentional last-set AMRAP
+        const amrapFlag = sessionData.R3 && sessionData.R3 > 12;
+
+        // Update anchor and get detailed feedback
+        const result = updateExerciseAnchor(ex.name, sessionData);
+
+        if (result) {
+          anchorUpdates.push({
+            exercise: ex.name,
+            ...result,
+            amrapFlag
+          });
+        }
+      }
+    });
+
     _clearRestTimer({ clearPersisted: false });
 
     if (window.ApexState?.addSession) {
-      await window.ApexState.addSession(session, dayKey, pf, workout);
+      await window.ApexState.addSession(session, dayKey, pf, workout, anchorUpdates);
     } else {
       S.sessions = [session, ...S.sessions];
       S.prefill[dayKey] = pf;
