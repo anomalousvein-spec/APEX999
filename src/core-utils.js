@@ -289,7 +289,7 @@
    * Update the Anchor for an exercise based on session performance.
    * Implements the three-case logic from 12RM_Concept.md:
    * - Case 1: First-set failure (R1 < 12)
-   * - Case 2: Intentional last-set AMRAP (R3 > 12)
+   * - Case 2: Intentional last-set AMRAP (R3 > 12 or amrapFlagged = true)
    * - Case 3: Normal session (R1 = 12, no AMRAP)
    * @param {string} exName - Exercise name
    * @param {Object} sessionData - Session data with reps and weight info
@@ -297,12 +297,13 @@
    * @param {number} sessionData.R1 - Reps achieved on set 1
    * @param {number} [sessionData.R2] - Reps achieved on set 2 (optional)
    * @param {number} [sessionData.R3] - Reps achieved on set 3 (optional, for AMRAP)
+   * @param {boolean} [sessionData.amrapFlagged] - User-declared AMRAP intent (PHASE 4)
    */
   function updateExerciseAnchor(exName, sessionData) {
     const S = window.S;
     if (!S || !S.exerciseAnchors) return;
 
-    const { W, R1, R2, R3 } = sessionData;
+    const { W, R1, R2, R3, amrapFlagged } = sessionData;
     if (!W || !R1) return;
 
     const constants = {
@@ -336,6 +337,9 @@
     let adjustmentReason = '';
     let amrapPerformed = false;
 
+    // PHASE 4: Check for user-declared AMRAP intent
+    const hasAmrapIntent = amrapFlagged === true || (R3 && R3 > 12);
+
     // Case 1: First-set failure (R1 < 12)
     if (R1 < 12) {
       const W_14RM = compute14RM(W, R1);
@@ -344,8 +348,8 @@
       sessionOutcome = 'decreased';
       adjustmentReason = `First-set failure (${R1} reps) - reduced anchor based on ${R1}RM estimate`;
     }
-    // Case 2: Intentional last-set AMRAP (R3 > 12)
-    else if (R3 && R3 > 12) {
+    // Case 2: Intentional last-set AMRAP (user-flagged or R3 > 12)
+    else if (hasAmrapIntent && R3) {
       const W_14RM = compute14RM(W, R3);
       A_new = constants.alpha * W_14RM + (1 - constants.alpha) * A_old;
       amrapPerformed = true;
@@ -353,10 +357,10 @@
       if (R1 === 12 && (!R2 || (R1 - R2) < constants.drop_rep_threshold)) {
         streak += 1;
         sessionOutcome = 'increased';
-        adjustmentReason = `AMRAP calibration (${R3} reps) - blended into anchor`;
+        adjustmentReason = `AMRAP calibration (${R3} reps${amrapFlagged ? ' [user-flagged]' : ''}) - blended into anchor`;
       } else {
         sessionOutcome = 'increased';
-        adjustmentReason = `AMRAP calibration (${R3} reps) - blended into anchor (fatigue noted)`;
+        adjustmentReason = `AMRAP calibration (${R3} reps${amrapFlagged ? ' [user-flagged]' : ''}) - blended into anchor (fatigue noted)`;
       }
     }
     // Case 3: Normal session (R1 = 12 or R1 >= 12, no AMRAP)
