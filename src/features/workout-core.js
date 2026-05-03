@@ -200,9 +200,9 @@
 
   function createSetLog(prefillSet) {
     if (prefillSet && (prefillSet.weight || prefillSet.reps)) {
-      return { weight: prefillSet.weight || '', reps: prefillSet.reps || '', done: false, isPf: true };
+      return { weight: prefillSet.weight || '', reps: prefillSet.reps || '', done: false, isPf: true, isAmrap: false };
     }
-    return { weight: '', reps: '', done: false, isPf: false };
+    return { weight: '', reps: '', done: false, isPf: false, isAmrap: false };
   }
 
   function workoutMatchesSlotDefs(day, workout) {

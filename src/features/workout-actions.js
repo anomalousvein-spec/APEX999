@@ -526,6 +526,25 @@
     const workout = S.workouts[dayKey];
     const total = workout.reduce((sum, slot) => slot.isWarmup ? sum : sum + slot.numSets, 0);
     const done = workout.reduce((sum, slot) => slot.isWarmup ? sum : sum + slot.sets.filter(log => log.done).length, 0);
+    
+    // PHASE 4: Session validation - ensure minimum data quality before completion
+    if (done === 0) {
+      showToast('Mark at least one set as done before completing', 'warn');
+      return;
+    }
+    
+    // PHASE 4: Validate exercises have required data for anchor calculation
+    const exercisesWithData = workout.filter(slot => {
+      if (slot.isWarmup) return false;
+      const doneSets = slot.sets.filter(s => s.done);
+      return doneSets.length > 0 && doneSets[0].reps !== '' && doneSets[0].weight !== '';
+    });
+    
+    if (exercisesWithData.length === 0) {
+      showToast('Complete at least one exercise with weight and reps to finish session', 'warn');
+      return;
+    }
+    
     if (done < total) {
       showModal(
         'Incomplete Sets',
@@ -584,6 +603,11 @@
     });
 
     const sessionId = S._activeSessionId || (Date.now() + '-' + Math.random().toString(36).slice(2, 8));
+    
+    // PHASE 4: Session status tracking for proper lifecycle management
+    const totalExpectedSets = workout.reduce((sum, slot) => slot.isWarmup ? sum : sum + slot.numSets, 0);
+    const sessionStatus = doneSets >= totalExpectedSets ? 'completed' : 'partial';
+    
     const session = {
       id: sessionId,
       date: new Date().toISOString(),
@@ -596,7 +620,8 @@
       totalSetsCompleted: doneSets,
       totalSets,
       durationMinutes: duration,
-      volByCat
+      volByCat,
+      status: sessionStatus  // PHASE 4: Track session completion status
     };
 
     const pf = {};
@@ -616,7 +641,8 @@
       const doneSets = slot.sets.filter(s => s.done).map(s => ({
         setNum: parseInt(s.setNum || 1),
         weight: parseFloat(s.weight) || 0,
-        reps: parseFloat(s.reps) || 0
+        reps: parseFloat(s.reps) || 0,
+        isAmrap: !!s.isAmrap  // PHASE 4: Capture AMRAP flag from set log
       })).sort((a, b) => a.setNum - b.setNum);
 
       if (doneSets.length > 0 && typeof updateExerciseAnchor === 'function') {
@@ -624,11 +650,12 @@
           W: doneSets[0].weight,
           R1: doneSets[0].reps,
           R2: doneSets.length >= 2 ? doneSets[1].reps : undefined,
-          R3: doneSets.length >= 3 ? doneSets[2].reps : undefined
+          R3: doneSets.length >= 3 ? doneSets[2].reps : undefined,
+          amrapFlagged: doneSets.some(s => s.isAmrap)  // PHASE 4: User-declared AMRAP intent
         };
 
-        // Detect AMRAP intent: R3 > 12 indicates intentional last-set AMRAP
-        const amrapFlag = sessionData.R3 && sessionData.R3 > 12;
+        // Detect AMRAP intent: prioritize user flag, fall back to R3 > 12 heuristic
+        const amrapFlag = sessionData.amrapFlagged || (sessionData.R3 && sessionData.R3 > 12);
 
         // Update anchor and get detailed feedback
         const result = updateExerciseAnchor(ex.name, sessionData);
