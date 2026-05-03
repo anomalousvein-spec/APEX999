@@ -74,7 +74,7 @@ input[type=number]{-moz-appearance:textfield}
 .day-btn-sub{font-size:9px;opacity:.5}
 
 /* ── TABS ───────────────────────────────────────────── */
-.tab{display:none;padding:14px}
+.tab{display:none;padding:14px;background:var(--bg);color:var(--text)}
 .tab.active{display:block}
 
 /* ── DELOAD BANNER ───────────────────────────────────── */

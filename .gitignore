@@ -1,4 +1,1 @@
-```markdown
-# Project-specific ignores
-REFACTOR_PLAN.md
-```
+Nothing should be ignored since only a CSS file was modified and no build artifacts, dependencies, or temporary files were detected in the changes.
