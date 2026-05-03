@@ -298,20 +298,52 @@
    * @param {number} [sessionData.R2] - Reps achieved on set 2 (optional)
    * @param {number} [sessionData.R3] - Reps achieved on set 3 (optional, for AMRAP)
    * @param {boolean} [sessionData.amrapFlagged] - User-declared AMRAP intent (PHASE 4)
+   * @param {string} [sessionData.sessionStatus] - Session completion status ('completed' or 'partial') (PHASE 5)
+   * @param {number} [sessionData.daysSinceLast] - Days since last session for this exercise (PHASE 5)
+   * @param {boolean} [sessionData.skipAnchorUpdate] - User chose to skip anchor update for bad day (PHASE 5)
    */
   function updateExerciseAnchor(exName, sessionData) {
     const S = window.S;
     if (!S || !S.exerciseAnchors) return;
 
-    const { W, R1, R2, R3, amrapFlagged } = sessionData;
+    const { W, R1, R2, R3, amrapFlagged, sessionStatus, daysSinceLast, skipAnchorUpdate } = sessionData;
     if (!W || !R1) return;
+
+    // PHASE 5: Edge Case - User explicitly chose to skip anchor update (bad day safeguard)
+    if (skipAnchorUpdate === true) {
+      console.log(`[Anchor] Skipped update for ${exName} - user flagged as bad day`);
+      return {
+        previousAnchor: getExerciseAnchor(exName) || W,
+        newAnchor: getExerciseAnchor(exName) || W,
+        change: 0,
+        sessionOutcome: 'skipped',
+        adjustmentReason: 'User skipped anchor update (bad day safeguard)',
+        amrapPerformed: false,
+        skipped: true
+      };
+    }
+
+    // PHASE 5: Edge Case - Incomplete session status blocks anchor updates
+    if (sessionStatus === 'partial') {
+      console.log(`[Anchor] Skipped update for ${exName} - incomplete session`);
+      return {
+        previousAnchor: getExerciseAnchor(exName) || W,
+        newAnchor: getExerciseAnchor(exName) || W,
+        change: 0,
+        sessionOutcome: 'incomplete',
+        adjustmentReason: 'Incomplete session - anchor update deferred until workout is fully completed',
+        amrapPerformed: false,
+        incomplete: true
+      };
+    }
 
     const constants = {
       alpha: 0.3,
       target_RM: 14,
       auto_nudge: 1.25,
       perfect_streak_threshold: 2,
-      drop_rep_threshold: 2
+      drop_rep_threshold: 2,
+      long_gap_threshold: 14 // PHASE 5: Reset streak if >14 days gap
     };
 
     const anchors = S.exerciseAnchors;
@@ -326,6 +358,13 @@
     const A_old = state.anchor;
     let A_new = A_old;
     let streak = state.perfect_streak_counter || 0;
+
+    // PHASE 5: Edge Case - Long gap detection (reset streak if >14 days since last session)
+    if (daysSinceLast !== undefined && daysSinceLast !== null && daysSinceLast > constants.long_gap_threshold) {
+      console.log(`[Anchor] Long gap detected for ${exName} (${daysSinceLast} days) - resetting streak`);
+      streak = 0;
+      // Note: We don't block the update, just reset the streak to prevent auto-nudge after a long layoff
+    }
 
     // Helper: compute 14RM estimate from a set using Epley-based formula
     const compute14RM = (weight, reps) => {

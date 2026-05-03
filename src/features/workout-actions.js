@@ -633,6 +633,10 @@
     // PHASE 1: Per-session anchor update with intent detection and feedback
     // Collect session data for each exercise and update anchors at session level
     const anchorUpdates = [];
+    
+    // PHASE 5: Get session history for days-since-last calculation
+    const getExerciseSessionHistory = window.ApexCoreUtils?.getExerciseSessionHistory || window.getExerciseSessionHistory;
+    
     exercises.forEach(ex => {
       const slot = workout.find(s => s.exercise === ex.name);
       if (!slot || slot.isWarmup) return;
@@ -646,12 +650,27 @@
       })).sort((a, b) => a.setNum - b.setNum);
 
       if (doneSets.length > 0 && typeof updateExerciseAnchor === 'function') {
+        // PHASE 5: Calculate days since last session for this exercise
+        let daysSinceLast = null;
+        if (typeof getExerciseSessionHistory === 'function') {
+          const history = getExerciseSessionHistory(ex.name, { excludeSessionId: sessionId });
+          if (history && history.length > 0) {
+            const lastSessionDate = new Date(history[0].date);
+            const today = new Date();
+            const diffTime = Math.abs(today - lastSessionDate);
+            daysSinceLast = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          }
+        }
+        
         const sessionData = {
           W: doneSets[0].weight,
           R1: doneSets[0].reps,
           R2: doneSets.length >= 2 ? doneSets[1].reps : undefined,
           R3: doneSets.length >= 3 ? doneSets[2].reps : undefined,
-          amrapFlagged: doneSets.some(s => s.isAmrap)  // PHASE 4: User-declared AMRAP intent
+          amrapFlagged: doneSets.some(s => s.isAmrap),  // PHASE 4: User-declared AMRAP intent
+          sessionStatus: sessionStatus,  // PHASE 5: Pass session completion status
+          daysSinceLast: daysSinceLast,  // PHASE 5: Days since last session for streak reset
+          skipAnchorUpdate: false  // PHASE 5: Default to false; can be overridden via UI prompt
         };
 
         // Detect AMRAP intent: prioritize user flag, fall back to R3 > 12 heuristic
@@ -697,10 +716,21 @@
     // PHASE 3: Show anchor adjustment feedback (silent coach)
     if (anchorUpdates && anchorUpdates.length > 0) {
       anchorUpdates.forEach(update => {
+        // Skip feedback for skipped/incomplete sessions - they don't change the anchor
+        if (update.skipped || update.incomplete) {
+          console.log(`[Feedback] Skipping notification for ${update.exercise} - ${update.sessionOutcome}`);
+          return;
+        }
+        
+        // Only show feedback when anchor actually changed
         if (update.change !== 0) {
           const changeText = update.change > 0 ? `+${update.change.toFixed(1)}` : update.change.toFixed(1);
           const reasonText = update.adjustmentReason || 'Session complete';
           showAnchorFeedback(update.exercise, changeText, reasonText);
+        } else if (update.sessionOutcome === 'unchanged' || update.sessionOutcome === 'streak-building') {
+          // Optional: Show subtle feedback for unchanged anchor with reason (e.g., rep drop detected)
+          // This provides transparency about why no increase happened
+          console.log(`[Feedback] Anchor unchanged for ${update.exercise}: ${update.adjustmentReason}`);
         }
       });
     }
