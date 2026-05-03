@@ -282,7 +282,12 @@
     const anchors = window.S?.exerciseAnchors || {};
     const anchorData = anchors[exName];
     if (!anchorData || typeof anchorData.anchor !== 'number') return null;
-    return Math.round(anchorData.anchor);
+
+    const raw = anchorData.anchor;
+    // Implement plate rounding: round to nearest 2.5 (common in gym plates)
+    // You can make this a user setting in the future, but 2.5 is a solid default.
+    const plateIncrement = 2.5;
+    return Math.round(raw / plateIncrement) * plateIncrement;
   }
 
   /**
