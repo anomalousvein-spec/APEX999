@@ -42,7 +42,7 @@ function getAllExercises() {
 
 function rebuildReviewDerivedCaches() {
   const S = getS();
-  const sorted = [...(S.sessions || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const sorted = [...( (S.sessions || []).filter(s => s && s.date) )].sort((a, b) => new Date(a.date) - new Date(b.date));
   const map = new Map();
   const cats = new Set();
 

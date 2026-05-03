@@ -10,8 +10,13 @@
  * Feature modules live in src/features/.
  */
 
+let _modularStartAttempted = false;
+
 function legacyStartApp() {
-  if (typeof window.ApexRuntime?.start === 'function') {
+  // Safeguard: if we already tried modular start and ended up here (fallback),
+  // do NOT try modular start again to avoid infinite recursion.
+  if (typeof window.ApexRuntime?.start === 'function' && !_modularStartAttempted) {
+    _modularStartAttempted = true;
     window.ApexRuntime.start();
   } else {
     if (typeof renderHeader === 'function') renderHeader();
