@@ -274,3 +274,11 @@
 - Standardized boot-time recovery and schema normalization for `restTimer` and `bodyMetrics` in `src/state-facade.js`.
 - Bumped service worker cache to `lift-v76` to ship the modular shell refinements.
 - Functional verification: confirmed end-to-end "Finish Workout" flow is stable using Playwright.
+2026-05-03 - Architectural Refactor: Modularization and Storage Health
+- Modularization: Split the 1,296-line monolith `src/state-facade.js` into domain-specific modules in `src/state-modules/` (workout, body, review, edit, shared-utils).
+- State Facade: Refactored `src/state-facade.js` into a thin orchestrator (393 lines) that delegates to specialized modules while maintaining backward compatibility for the public API.
+- Tab Lifecycle: Standardized tab renderers with an `init` and `cleanup` lifecycle in `src/runtime-shell.js` to improve resource management and reliability.
+- Storage Health: Implemented a new "Storage Health" feature (`src/features/storage-health.js`) with a dedicated dashboard in the Edit tab, showing real-time LocalStorage and IndexedDB metrics.
+- UI Consistency: Renamed "Target 10RM" to "Estimated 14RM (Anchor)" in the history and review tabs for alignment with the 12RM Concept specification.
+- Documentation: Created `DEVELOPER_GUIDE.md` detailing the new modular architecture and maintenance procedures.
+- Maintenance: Removed dead code and console logging from state modules; updated `index.html` script loading order for new architecture.

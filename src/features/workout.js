@@ -245,6 +245,8 @@
   }
 
   window.renderWorkout = renderWorkout;
+  window.initWorkout = renderWorkout;
+  window.cleanupWorkout = () => {};
   window.updateFinishButtonState = updateFinishButtonState;
   window.updateWorkoutNotes = updateWorkoutNotes;
   window.toggleLastSets = toggleLastSets;

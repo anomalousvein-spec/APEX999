@@ -2,10 +2,16 @@
   function resolveRenderer(currentName, legacyName = currentName) {
     if (typeof window[currentName] === 'function') return window[currentName];
     if (typeof window.ApexLegacy?.[legacyName] === 'function') return window.ApexLegacy[legacyName];
+    // Fallback if we have renderX but not initX
+    if (currentName.startsWith('init')) {
+      const altName = currentName.replace('init', 'render');
+      if (typeof window[altName] === 'function') return window[altName];
+    }
     return null;
   }
 
   let rendererDiagLogged = false;
+  let activeTabCleanup = null;
 
   function getRendererAvailability() {
     const rendererNames = [
@@ -20,7 +26,7 @@
 
     const results = rendererNames.map(name => ({
       name,
-      modular: typeof window[name] === 'function',
+      modular: typeof window[name] === 'function' || typeof window['init' + name.slice(6)] === 'function',
       legacy: typeof window.ApexLegacy?.[name] === 'function'
     }));
 
@@ -104,12 +110,31 @@
   }
 
   function renderTab(tabId) {
-    if (tabId === 'workout') callRenderer('renderWorkout');
-    if (tabId === 'body') callRenderer('renderBody');
-    if (tabId === 'history') callRenderer('renderHistory');
-    if (tabId === 'analytics') callRenderer('renderAnalytics');
-    if (tabId === 'sessions') callRenderer('renderSessions');
-    if (tabId === 'edit') callRenderer('renderEdit');
+    // Run cleanup for previous tab if it exists
+    if (typeof activeTabCleanup === 'function') {
+      try { activeTabCleanup(); } catch (e) { console.warn('Cleanup failed', e); }
+      activeTabCleanup = null;
+    }
+
+    if (tabId === 'workout') {
+      callRenderer('initWorkout', 'renderWorkout');
+      activeTabCleanup = window.cleanupWorkout || null;
+    } else if (tabId === 'body') {
+      callRenderer('initBody', 'renderBody');
+      activeTabCleanup = window.cleanupBody || null;
+    } else if (tabId === 'history') {
+      callRenderer('initHistory', 'renderHistory');
+      activeTabCleanup = window.cleanupHistory || null;
+    } else if (tabId === 'analytics') {
+      callRenderer('initAnalytics', 'renderAnalytics');
+      activeTabCleanup = window.cleanupAnalytics || null;
+    } else if (tabId === 'sessions') {
+      callRenderer('initSessions', 'renderSessions');
+      activeTabCleanup = window.cleanupSessions || null;
+    } else if (tabId === 'edit') {
+      callRenderer('initEdit', 'renderEdit');
+      activeTabCleanup = window.cleanupEdit || null;
+    }
   }
 
   function getActiveTab() {
@@ -117,25 +142,26 @@
   }
 
   function refreshHeader() {
-    callRenderer('renderHeader');
+    callRenderer('initHeader', 'renderHeader');
   }
 
   function refreshWorkout() {
-    callRenderer('renderWorkout');
+    if (getActiveTab() === 'workout') callRenderer('initWorkout', 'renderWorkout');
   }
 
   function refreshBody() {
-    callRenderer('renderBody');
+    if (getActiveTab() === 'body') callRenderer('initBody', 'renderBody');
   }
 
   function refreshReview() {
-    callRenderer('renderHistory');
-    callRenderer('renderAnalytics');
-    callRenderer('renderSessions');
+    const tab = getActiveTab();
+    if (tab === 'history') callRenderer('initHistory', 'renderHistory');
+    if (tab === 'analytics') callRenderer('initAnalytics', 'renderAnalytics');
+    if (tab === 'sessions') callRenderer('initSessions', 'renderSessions');
   }
 
   function refreshEdit() {
-    callRenderer('renderEdit');
+    if (getActiveTab() === 'edit') callRenderer('initEdit', 'renderEdit');
   }
 
   function refreshActiveTab() {
