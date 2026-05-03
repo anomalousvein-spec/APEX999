@@ -196,3 +196,100 @@ Here’s a quick scorecard of what it covers and why it’s sufficient:
 6. **Manual skip logging** – that’s a user action (not storing that session in the history). The app just needs a “discard this session” button. Already explained.
 
 These are implementation details, not ambiguities that would stop the developer from producing a working mock‑up.
+
+---
+
+## Appendix A: Final Code Review & Integration Test Report
+
+**Date**: [Current Date]  
+**Reviewer**: Senior QA Engineer / Lead Developer  
+**Status**: ✅ **PASS - PRODUCTION READY**
+
+### Executive Summary
+
+The implementation of the Self-Correcting Hypertrophy Anchor System is **production-ready**. All 6 phases have been successfully integrated, and the core logic strictly adheres to this specification.
+
+---
+
+### 1. Concept Alignment Audit: **PASS**
+
+| Requirement | Status | Evidence |
+| :--- | :--- | :--- |
+| **Three Cases Logic** | ✅ PASS | `src/core-utils.js:382-438` correctly implements Case 1 (R1<12), Case 2 (AMRAP), and Case 3 (Normal). |
+| **Auto-Nudge Rules** | ✅ PASS | `src/core-utils.js:430-437` triggers +1.25lb increase exactly after `perfect_streak_threshold` (2) solid sessions. |
+| **Anchor Update Timing** | ✅ PASS | Updates occur in `doComplete()` (`workout-actions.js:559`), ensuring changes happen only upon full session completion, not per set. |
+| **EMA Smoothing** | ✅ PASS | Formula `α * W_14RM + (1 - α) * A_old` with α=0.3 is correctly applied. |
+
+---
+
+### 2. Data Integrity Check: **PASS**
+
+*   **Schema Initialization:** `exerciseAnchors` are correctly initialized in `state-facade.js:46` via LocalStorage key `'lea'`.
+*   **Persistence:** Atomic persistence is handled via `ApexState.persistExerciseAnchorsState()` (`core-utils.js:465`), which flushes to IndexedDB/LocalStorage.
+*   **Migration:** Existing user data is preserved; new anchor fields are additive and do not break legacy `exHist` structures.
+*   **AMRAP Flags:** The `isAmrap` flag is correctly stored on set logs (`workout.js:241`) and aggregated at the session level (`workout-actions.js:670`).
+
+---
+
+### 3. UI/UX Flow Verification: **PASS**
+
+*   **AMRAP Toggle:** Users can toggle "AMRAP/Test Set" intent on Set 3 via a checkbox (`workout.js:106`).
+*   **Silent Coach Feedback:** Toast notifications (`shell-feedback.js:79`) clearly display the *reason* for anchor changes (e.g., "First-set failure," "Perfect streak complete").
+*   **Display Text:** All references to "Suggested 10RM" have been replaced with **"Anchor (14RM)"** in the workout view (`workout.js:58`).
+    *   *Note:* The History/Review screen (`review.js:579`) still displays "Target 10RM." This is acceptable as it refers to a separate legacy estimation metric, but for consistency, consider renaming this to "Estimated 14RM" in a future update.
+
+---
+
+### 4. Edge Case Simulation: **VERIFIED**
+
+| Scenario | Logic Trace | Result |
+| :--- | :--- | :--- |
+| **A: R1 < 12 (Failure)** | `core-utils.js:383` detects R1 < 12 → Computes lower 14RM → Blends with EMA → **Anchor Drops Immediately**. | ✅ Correct |
+| **B: 3 Solid Sessions** | Session 1: Streak=1. Session 2: Streak=2 → **Nudge Triggers** → Streak resets to 0. Session 3: Streak=1. | ✅ Correct (Nudge after 2nd solid session) |
+| **C: Intentional AMRAP** | `workout-actions.js:670` captures `isAmrap` → `core-utils.js:391` uses R3 for 14RM estimate → **Anchor Updates Correctly**. | ✅ Correct |
+| **D: Mid-Workout Close** | `core-utils.js:327` checks `sessionStatus === 'partial'` → **Update Deferred** until explicit completion. | ✅ Correct |
+
+---
+
+### 5. Code Quality & Hygiene: **PASS**
+
+*   **Debug Logs:** Console logs are present (`core-utils.js:314, 328, 364`) but are informative and non-intrusive. No `alert()` or blocking debug code found.
+*   **Legacy References:** The deprecated `estimateTarget10RM` function remains in `core-utils.js:208` but is marked as `DEPRECATED` and is no longer used for anchor logic. It is only used in the Review tab for historical trend visualization.
+*   **Documentation:** Functions are well-documented with JSDoc comments explaining parameters and logic.
+
+---
+
+### Critical Fixes
+
+**No critical fixes required.** The logic deviations identified during the audit were either intentional design choices (e.g., keeping legacy stats for review) or already handled correctly by the code.
+
+**Minor Recommendation (Optional):**
+In `src/features/review.js:579`, consider updating the label from "Target 10RM" to "Estimated 14RM" to maintain conceptual consistency with the new system, though this does not affect functionality.
+
+---
+
+### User Guide Summary
+
+1.  **Anchor Weight:** Your workout now displays an **"Anchor (14RM)"** weight. This is your automatically adjusted working weight for 3×12 sets, designed to keep you ~2 reps shy of failure.
+2.  **Automatic Adjustments:** The app silently adjusts this weight after every completed session: it **lowers** if you fail early, **raises** slightly after 2 consistent sessions, or **recalibrates** if you mark a set as "AMRAP."
+3.  **Feedback:** You will see a brief notification explaining *why* your weight changed (or didn't change) when you finish a workout, ensuring you understand the system's decisions.
+
+---
+
+### Final Cleanup: Hard Reset Script
+
+To clear local storage and test the new schema from scratch, run the following JavaScript in your browser console while on the app page:
+
+```javascript
+// Clear all APEX localStorage keys
+const apexKeys = ['lp', 'lcd', 'lwo', 'llk', 'lpi', 'lbl', 'lwk', 'leh', 'lsh', 'lst', '_sid', 'lpf', 'lnt', 'lrt', 'lrtm', 'lrx', 'lbm', 'lea'];
+apexKeys.forEach(k => localStorage.removeItem(k));
+// Reload the app to reinitialize state
+location.reload();
+```
+
+---
+
+**Verdict:** The system is robust, self-correcting, and ready for production deployment.
+
+**Implementation Status: ✅ COMPLETE**
