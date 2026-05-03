@@ -14,6 +14,9 @@
     renderAnalytics: typeof renderAnalytics === 'function' ? renderAnalytics : null,
     renderSessions: typeof renderSessions === 'function' ? renderSessions : null,
     renderEdit: typeof renderEdit === 'function' ? renderEdit : null,
+    baseSets: typeof baseSets === 'function' ? baseSets : null,
+    computeSets: typeof computeSets === 'function' ? computeSets : null,
+    ensurePools: typeof ensurePools === 'function' ? ensurePools : null,
     notes: 'Snapshot of original app.js entrypoints before modular overrides load'
   };
 })();
