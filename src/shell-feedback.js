@@ -75,18 +75,50 @@
     document.body.appendChild(d);
   }
 
+  // PHASE 3: Silent coach feedback for anchor adjustments
+  function showAnchorFeedback(exercise, changeText, reasonText) {
+    const notification = document.createElement('div');
+    notification.className = 'anchor-feedback-toast';
+    notification.innerHTML = `
+      <div class="feedback-header">
+        <span class="feedback-icon">&#127919;</span>
+        <strong>${escapeHtml(exercise)}</strong>
+      </div>
+      <div class="feedback-body">
+        Anchor: <span class="change-value">${changeText} lbs</span>
+      </div>
+      <div class="feedback-reason">${escapeHtml(reasonText)}</div>
+    `;
+    document.body.appendChild(notification);
+    
+    // Trigger animation
+    setTimeout(() => notification.classList.add('show'), 10);
+    
+    // Auto-remove after 6 seconds
+    setTimeout(() => {
+      notification.classList.remove('show');
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 6000);
+  }
+
   window.showToast = showToast;
   window.showModal = showModal;
   window.closeModal = closeModal;
   window.confirmModal = confirmModal;
   window.showSessionSummary = showSessionSummary;
   window.closeSessionSummary = closeSessionSummary;
+  window.showAnchorFeedback = showAnchorFeedback;
   window.ApexFeedback = {
     showToast,
     showModal,
     closeModal,
     confirmModal,
     showSessionSummary,
-    closeSessionSummary
+    closeSessionSummary,
+    showAnchorFeedback
   };
 })();

@@ -97,8 +97,19 @@
         const curVol = numVal(log.weight) * numVal(log.reps);
         const isLivePR = bestVol > 0 && curVol >= bestVol;
 
+        // PHASE 3: AMRAP toggle for Set 3 - user explicitly declares intent
+        const isSet3 = (li === 2);
+        const amrapChecked = log.isAmrap ? ' checked' : '';
+        const amrapDisabled = !log.done ? ' disabled' : '';
+        const amrapLabel = isSet3
+          ? `<label class="amrap-toggle${amrapDisabled}" title="Mark this set as an intentional AMRAP for anchor calibration">
+              <input type="checkbox" data-si="${si}" data-li="${li}" data-amrap="1" onchange="toggleAmrapIntent(${si},${li},this.checked)"${amrapChecked}>
+              <span>AMRAP</span>
+             </label>`
+          : '';
+
         setRows += `<div class="set-row${doneRow}" id="sr-${si}-${li}">
-          <span class="set-n${doneNum}">${li + 1}${isLivePR ? '<span class="live-pr-dot" title="Live PR Volume!"></span>' : ''}</span>
+          <span class="set-n${doneNum}\">${li + 1}${isLivePR ? '<span class="live-pr-dot" title="Live PR Volume!"></span>' : ''}</span>
           <input class="set-i${pf}" type="text" inputmode="decimal" enterkeyhint="next"
             placeholder="${escapeHtml(pfWeight)}" value="${escapeHtml(log.weight)}"
             data-si="${si}" data-li="${li}" data-f="weight"
@@ -119,8 +130,8 @@
             title="${hasData ? 'Clear values first' : 'Delete set'}"
             ${hasData ? 'disabled' : ''}>X</button>
           <button class="ck-btn${log.done ? ' checked' : ''}" onclick="toggleDone(${si},${li})" aria-label="${log.done ? 'Mark set incomplete' : 'Mark set done'}">${log.done ? '&#10003;' : '&#9675;'}</button>
+          ${amrapLabel}
         </div>`;
-      });
 
       html += `<div class="ex-card" id="ec-${si}">
         <div class="ex-hdr">
@@ -217,8 +228,25 @@
     chev.innerHTML = isHidden ? '&#9652;' : '&#9662;';
   }
 
+  // PHASE 3: AMRAP intent toggle handler
+  function toggleAmrapIntent(si, li, isChecked) {
+    const S = getS();
+    const dayKey = String(S.currentDay);
+    if (!S || !S.workouts || !S.workouts[dayKey]) return;
+    
+    const slot = S.workouts[dayKey][si];
+    if (!slot || !slot.sets || !slot.sets[li]) return;
+    
+    // Update the isAmrap flag in the set log
+    slot.sets[li].isAmrap = isChecked;
+    
+    // Persist the change
+    persistState();
+  }
+
   window.renderWorkout = renderWorkout;
   window.updateFinishButtonState = updateFinishButtonState;
   window.updateWorkoutNotes = updateWorkoutNotes;
   window.toggleLastSets = toggleLastSets;
+  window.toggleAmrapIntent = toggleAmrapIntent;
 })();
