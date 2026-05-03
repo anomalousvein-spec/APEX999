@@ -342,6 +342,15 @@
     return S.pools;
   }
 
+  async function persistExerciseAnchorsState() {
+    if (window.ApexStorage?.set) {
+      await window.ApexStorage.set('lea', S.exerciseAnchors);
+    }
+    if (window.ApexStorage?.flush) await window.ApexStorage.flush();
+    persistLegacyFallback();
+    return S.exerciseAnchors;
+  }
+
   function sortExerciseHistoryEntries(entries) {
     return [...entries].sort((a, b) => {
       const dateCmp = String(a?.date || '').localeCompare(String(b?.date || ''));
@@ -689,7 +698,8 @@
       lwo: S.workouts,
       lst: S.startTime,
       _sid: S._activeSessionId || null,
-      lrtm: S.restTimer
+      lrtm: S.restTimer,
+      lea: S.exerciseAnchors  // PHASE 2: Include exercise anchors in session persistence
     };
     if (typeof window.ApexStorage?.setMany === 'function') {
       await window.ApexStorage.setMany(entries);
@@ -1256,6 +1266,7 @@
     persistBodyMetrics,
     persistHeaderState,
     persistPoolsState,
+    persistExerciseAnchorsState,  // PHASE 2: Add export for anchor persistence
     syncExerciseHistoryEntry,
     syncSlotHistoryEntries,
     renameExercise,
