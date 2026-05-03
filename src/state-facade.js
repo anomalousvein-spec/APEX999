@@ -440,8 +440,11 @@
       repOnly: metrics.repOnly
     });
 
-    // Update the exercise anchor using the 12RM concept logic
-    if (typeof updateExerciseAnchor === 'function') {
+    // Update the exercise anchor using the 12RM concept logic (per-session, not per-set)
+    // Note: The actual anchor update happens at session completion in doComplete()
+    // This per-set call is kept for backward compatibility but should not modify state
+    if (typeof updateExerciseAnchor === 'function' && false) {
+      // DISABLED: Anchor updates now happen at session level in doComplete()
       // Collect all done sets for this exercise in this session to determine R1, R2, R3
       const doneSets = slot.sets.filter(s => s.done).map(s => ({
         setNum: parseInt(s.setNum || 1),
@@ -699,9 +702,14 @@
     persistLegacyFallback();
   }
 
-  async function addSession(session, dayKey, prefillMap, workout) {
+  async function addSession(session, dayKey, prefillMap, workout, anchorUpdates = []) {
     const nextSessions = [session, ...S.sessions];
     const dk = String(dayKey);
+
+    // PHASE 1: Store anchor update feedback with session for transparent user feedback
+    if (anchorUpdates && anchorUpdates.length > 0) {
+      session.anchorUpdates = anchorUpdates;
+    }
 
     // Prioritize storage write
     if (window.ApexStorage?.set) {

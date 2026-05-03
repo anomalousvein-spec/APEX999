@@ -331,19 +331,32 @@
       return weight * (1 + reps / 30) / (1 + constants.target_RM / 30);
     };
 
+    // Determine session outcome type and adjustment reason
+    let sessionOutcome = 'unchanged';
+    let adjustmentReason = '';
+    let amrapPerformed = false;
+
     // Case 1: First-set failure (R1 < 12)
     if (R1 < 12) {
       const W_14RM = compute14RM(W, R1);
       A_new = constants.alpha * W_14RM + (1 - constants.alpha) * A_old;
       streak = 0;
+      sessionOutcome = 'decreased';
+      adjustmentReason = `First-set failure (${R1} reps) - reduced anchor based on ${R1}RM estimate`;
     }
     // Case 2: Intentional last-set AMRAP (R3 > 12)
     else if (R3 && R3 > 12) {
       const W_14RM = compute14RM(W, R3);
       A_new = constants.alpha * W_14RM + (1 - constants.alpha) * A_old;
+      amrapPerformed = true;
       // Streak continues if R1 was solid (handled below)
       if (R1 === 12 && (!R2 || (R1 - R2) < constants.drop_rep_threshold)) {
         streak += 1;
+        sessionOutcome = 'increased';
+        adjustmentReason = `AMRAP calibration (${R3} reps) - blended into anchor`;
+      } else {
+        sessionOutcome = 'increased';
+        adjustmentReason = `AMRAP calibration (${R3} reps) - blended into anchor (fatigue noted)`;
       }
     }
     // Case 3: Normal session (R1 = 12 or R1 >= 12, no AMRAP)
@@ -355,28 +368,62 @@
           // Fatigue is high, not a solid session
           A_new = A_old;
           streak = 0;
+          sessionOutcome = 'unchanged';
+          adjustmentReason = `Rep drop detected (${R1}→${R2}) - blocked increase, reset streak`;
         } else {
           // Solid session
           streak += 1;
+          sessionOutcome = 'streak-building';
+          adjustmentReason = `Solid session (${R1} reps, drop=${R1-R2}) - streak: ${streak}/${constants.perfect_streak_threshold}`;
         }
       } else {
         // No R2 provided, assume solid
         streak += 1;
+        sessionOutcome = 'streak-building';
+        adjustmentReason = `Solid session (${R1} reps, no R2 logged) - streak: ${streak}/${constants.perfect_streak_threshold}`;
       }
 
       // Step 2: Auto-nudge on perfect streak
       if (streak >= constants.perfect_streak_threshold) {
         A_new = A_old + constants.auto_nudge;
         streak = 0;
+        sessionOutcome = 'increased';
+        adjustmentReason = `Perfect streak complete (${constants.perfect_streak_threshold} sessions) - auto-nudge +${constants.auto_nudge} lbs`;
       } else {
         A_new = A_old;
       }
     }
 
-    // Update state
+    // Build anchor history entry
+    const historyEntry = {
+      timestamp: new Date().toISOString(),
+      previousAnchor: Math.round(A_old * 100) / 100,
+      newAnchor: Math.round(A_new * 100) / 100,
+      change: Math.round((A_new - A_old) * 100) / 100,
+      sessionOutcome,
+      adjustmentReason,
+      amrapPerformed,
+      input: { W, R1, R2, R3 }
+    };
+
+    // Update state with history
+    const existingHistory = state.anchorHistory || [];
     anchors[exName] = {
       anchor: A_new,
-      perfect_streak_counter: streak
+      perfect_streak_counter: streak,
+      amrapPerformed,
+      sessionOutcome,
+      adjustmentReason,
+      anchorHistory: [...existingHistory, historyEntry].slice(-50) // Keep last 50 entries
+    };
+
+    return {
+      previousAnchor: Math.round(A_old * 100) / 100,
+      newAnchor: Math.round(A_new * 100) / 100,
+      change: Math.round((A_new - A_old) * 100) / 100,
+      sessionOutcome,
+      adjustmentReason,
+      amrapPerformed
     };
   }
 
