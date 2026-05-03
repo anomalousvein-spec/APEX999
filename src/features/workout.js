@@ -49,18 +49,18 @@
       const pinned = !!getPinnedExercise(dayKey, slot.id);
       const label = slot.label;
       const setCount = slot.numSets;
-      const target = estimateTarget10RM(slot.exercise);
+      const target = getExerciseAnchor(slot.exercise);
       const ago = daysAgo(slot.exercise);
       const restSec = S.restTimes[dayKey]?.[slot.id] || 90;
       const slotInProgress = slotHasProgress(slot);
       const rerollTitle = pinned ? 'Unpin to re-roll' : slotInProgress ? 'Clear or complete this exercise before re-rolling' : 'Re-roll exercise';
       let targetRowContent = target
-        ? `<span class="target-row-txt">Suggested 10RM: ${target} lbs</span><span class="target-row-sub">8-14 rep zone</span>`
-        : `<span class="target-row-txt no-data">No data yet - log 3+ sets to unlock</span>`;
+        ? `<span class="target-row-txt">Anchor (14RM): ${target} lbs</span><span class="target-row-sub">Use for 3×12 (~2 RIR)</span>`
+        : `<span class="target-row-txt no-data">Not calibrated - log a set near failure to start</span>`;
 
       if (target) {
-        const targetHint = '8-14 rep zone - assumes about 1-4 RIR from rep range position';
-        targetRowContent = `<span class="target-row-txt">Suggested 10RM: ${target} lbs</span><span class="target-row-sub">${targetHint}</span>`;
+        const targetHint = 'Self-correcting anchor based on your last session performance';
+        targetRowContent = `<span class="target-row-txt">Anchor (14RM): ${target} lbs</span><span class="target-row-sub">${targetHint}</span>`;
       }
 
       const lastUsedLbl = ago !== null
