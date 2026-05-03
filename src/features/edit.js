@@ -34,6 +34,7 @@
 
   async function renderEdit() {
     const S = getS();
+    if (typeof ensurePools === "function") ensurePools();
     const el = document.getElementById('tab-edit');
     if (!el) return;
 
@@ -74,7 +75,7 @@
     });
 
     const storageStatus = window.ApexState?.getStorageStatus() || { enabled: false, initialized: false, initializing: false, mode: 'idle', cachedKeys: 0 };
-    const driftReport = window.ApexState?.getStorageDriftReport() || { inSync: true, mismatches: [] };
+    const driftReport = window.ApexRuntime?.getStorageDriftReport() || { inSync: true, mismatches: [] };
     const storageLabel = !storageStatus.enabled
       ? 'Unavailable'
       : storageStatus.initialized
