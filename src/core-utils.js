@@ -417,6 +417,15 @@
       anchorHistory: [...existingHistory, historyEntry].slice(-50) // Keep last 50 entries
     };
 
+    // PHASE 2: Persist anchor changes to storage
+    // Trigger persistence via ApexState if available
+    if (typeof window.ApexState?.persistExerciseAnchorsState === 'function') {
+      // Fire-and-forget persistence to avoid blocking the UI
+      window.ApexState.persistExerciseAnchorsState().catch(err => {
+        console.warn('Failed to persist exercise anchors:', err);
+      });
+    }
+
     return {
       previousAnchor: Math.round(A_old * 100) / 100,
       newAnchor: Math.round(A_new * 100) / 100,
